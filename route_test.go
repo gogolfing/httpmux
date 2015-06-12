@@ -1,0 +1,135 @@
+package golfmux
+
+import "testing"
+
+func TestNewRoute(t *testing.T) {
+	route := newRoute("path")
+	if route.path != "path" {
+		t.Errorf("route.path = %v want %v", route.path, "path")
+	}
+	if route.children != nil {
+		t.Errorf("route.children = %v want %v", route.children, nil)
+	}
+	if route.routeHandler != nil {
+		t.Errorf("route.routeHandler = %v want %v", route.routeHandler, nil)
+	}
+}
+
+func TestRouteFindChildWithCommonPrefix(t *testing.T) {
+
+}
+
+func TestRouteIndexOfCommonPrefixChild(t *testing.T) {
+	tests := []struct {
+		path       string
+		childPaths []string
+		index      int
+		prefix     string
+	}{
+		{"", []string{}, -1, ""},
+		{"hello", []string{}, -1, ""},
+		{"", []string{"a", "b"}, -1, ""},
+		{"", []string{"", "hello"}, 0, ""},
+		{"character", []string{"another", "boy", "chooses", "division"}, 2, "ch"},
+		{"divisor", []string{"another", "boy", "chooses", "division"}, 3, "divis"},
+		{"ant", []string{"another", "boy", "chooses", "division", "elephant", "frogs", "giraffe"}, 0, "an"},
+		{"ant", []string{"boy", "chooses", "division", "elephant", "frogs", "giraffe"}, -1, ""},
+		{"hello", []string{"another", "boy", "chooses", "division", "elephant", "frogs", "giraffe"}, -8, ""},
+		{"boy", []string{"another", "chooses", "division", "elephant"}, -2, ""},
+		{"boy", []string{"another", "boy", "chooses", "division", "elephant", "frogs"}, 1, "boy"},
+	}
+	for _, test := range tests {
+		route := &Route{"", makeChildrenRoutes(test.childPaths), nil}
+		index, prefix := route.indexOfCommonPrefixChild(test.path)
+		if index != test.index || prefix != test.prefix {
+			t.Errorf("route.indexOfCommonPrefixChild(%q) = %v, %q want %v, %q",
+				test.path, index, prefix, test.index, test.prefix,
+			)
+		}
+	}
+}
+
+func makeChildrenRoutes(childPaths []string) []*Route {
+	result := make([]*Route, 0)
+	for _, path := range childPaths {
+		result = append(result, &Route{path, nil, nil})
+	}
+	return result
+}
+
+func TestRouteInsertChildAtIndex(t *testing.T) {
+	one := newRoute("one")
+	two := newRoute("two")
+	three := newRoute("three")
+	tests := []struct {
+		children []*Route
+		insert   *Route
+		index    int
+		result   []*Route
+	}{
+		{nil, one, -1, nil},
+		{nil, one, 2, nil},
+		{[]*Route{}, one, 2, []*Route{}},
+		{[]*Route{one}, two, 4, []*Route{one}},
+		{nil, one, 0, []*Route{one}},
+		{[]*Route{}, one, 0, []*Route{one}},
+		{[]*Route{one}, two, 0, []*Route{two, one}},
+		{[]*Route{one}, two, 1, []*Route{one, two}},
+		{[]*Route{one, two}, three, 0, []*Route{three, one, two}},
+		{[]*Route{one, two}, three, 1, []*Route{one, three, two}},
+		{[]*Route{one, two}, three, 2, []*Route{one, two, three}},
+		//these should not occur during normal use, but still testing.
+		{[]*Route{one, two}, nil, 1, []*Route{one, nil, two}},
+		{[]*Route{one, two}, two, 1, []*Route{one, two, two}},
+	}
+	for _, test := range tests {
+		route := &Route{"route", test.children, nil}
+		route.insertChildAtIndex(test.insert, test.index)
+		equals := areRoutesEqual(route.children, test.result)
+		if !equals {
+			t.Errorf("%v insertChildAtIndex(%v, %v) = %v want %v", test.children, test.insert, test.index, route.children, test.result)
+		}
+	}
+}
+
+func TestAreRoutesEqual(t *testing.T) {
+	one, two := newRoute("one"), newRoute("two")
+	tests := []struct {
+		a      []*Route
+		b      []*Route
+		equals bool
+	}{
+		{nil, nil, true},
+		{nil, []*Route{}, false},
+		{[]*Route{}, []*Route{}, true},
+		{nil, []*Route{one}, false},
+		{[]*Route{one}, []*Route{two}, false},
+		{[]*Route{one, two}, []*Route{one, two}, true},
+		{[]*Route{one, nil}, []*Route{one, nil}, true},
+		{[]*Route{one, nil}, []*Route{one, two}, false},
+	}
+	for _, test := range tests {
+		equals := areRoutesEqual(test.a, test.b)
+		if equals != test.equals {
+			t.Errorf("areRoutesEqual(%v, %v) = %v want %v", test.a, test.b, equals, test.equals)
+		}
+	}
+}
+
+func areRoutesEqual(a, b []*Route) bool {
+	if (a == nil) != (b == nil) {
+		return false
+	}
+	if a == nil && b == nil {
+		return true
+	}
+	if len(a) != len(b) {
+		return false
+	}
+	for i := 0; i < len(a); i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
