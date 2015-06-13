@@ -15,11 +15,46 @@ func TestNewRoute(t *testing.T) {
 	}
 }
 
-func TestRouteFindChildWithCommonPrefix(t *testing.T) {
-
+func TestRoute_FindChildWithCommonPrefix(t *testing.T) {
+	empty, a, b := newRoute(""), newRoute("a"), newRoute("b")
+	another := newRoute("another")
+	boy := newRoute("boy")
+	chooses := newRoute("chooses")
+	division := newRoute("division")
+	elephant := newRoute("elephant")
+	frogs := newRoute("frogs")
+	giraffe := newRoute("giraffe")
+	hello := newRoute("hello")
+	tests := []struct {
+		path     string
+		children []*Route
+		child    *Route
+		index    int
+		prefix   string
+	}{
+		{"", []*Route{}, nil, -1, ""},
+		{"hello", []*Route{}, nil, -1, ""},
+		{"", []*Route{a, b}, nil, -1, ""},
+		{"", []*Route{empty, hello}, empty, 0, ""},
+		{"character", []*Route{another, boy, chooses, division}, chooses, 2, "ch"},
+		{"divisor", []*Route{another, boy, chooses, division}, division, 3, "divis"},
+		{"ant", []*Route{another, boy, chooses, division, elephant, frogs, giraffe}, another, 0, "an"},
+		{"ant", []*Route{boy, chooses, division, elephant, frogs, giraffe}, nil, -1, ""},
+		{"hello", []*Route{another, boy, chooses, division, elephant, frogs, giraffe}, nil, -8, ""},
+		{"boy", []*Route{another, chooses, division, elephant}, nil, -2, ""},
+		{"boy", []*Route{another, boy, chooses, division, elephant, frogs}, boy, 1, "boy"},
+	}
+	for _, test := range tests {
+		route := &Route{"", test.children, nil}
+		child, index, prefix := route.findChildWithCommonPrefix(test.path)
+		if child != test.child || index != test.index || prefix != test.prefix {
+			t.Errorf("route.findChildWithCOmmonPrefix(%q) = %v, %v, %q want %v, %v, %q",
+				test.path, child, index, prefix, test.child, test.index, test.prefix)
+		}
+	}
 }
 
-func TestRouteIndexOfCommonPrefixChild(t *testing.T) {
+func TestRoute_IndexOfCommonPrefixChild(t *testing.T) {
 	tests := []struct {
 		path       string
 		childPaths []string
@@ -39,7 +74,7 @@ func TestRouteIndexOfCommonPrefixChild(t *testing.T) {
 		{"boy", []string{"another", "boy", "chooses", "division", "elephant", "frogs"}, 1, "boy"},
 	}
 	for _, test := range tests {
-		route := &Route{"", makeChildrenRoutes(test.childPaths), nil}
+		route := &Route{"", makeChildrenWithPaths(test.childPaths), nil}
 		index, prefix := route.indexOfCommonPrefixChild(test.path)
 		if index != test.index || prefix != test.prefix {
 			t.Errorf("route.indexOfCommonPrefixChild(%q) = %v, %q want %v, %q",
@@ -49,15 +84,7 @@ func TestRouteIndexOfCommonPrefixChild(t *testing.T) {
 	}
 }
 
-func makeChildrenRoutes(childPaths []string) []*Route {
-	result := make([]*Route, 0)
-	for _, path := range childPaths {
-		result = append(result, &Route{path, nil, nil})
-	}
-	return result
-}
-
-func TestRouteInsertChildAtIndex(t *testing.T) {
+func TestRoute_InsertChildAtIndex(t *testing.T) {
 	one := newRoute("one")
 	two := newRoute("two")
 	three := newRoute("three")
@@ -90,6 +117,14 @@ func TestRouteInsertChildAtIndex(t *testing.T) {
 			t.Errorf("%v insertChildAtIndex(%v, %v) = %v want %v", test.children, test.insert, test.index, route.children, test.result)
 		}
 	}
+}
+
+func makeChildrenWithPaths(childPaths []string) []*Route {
+	result := make([]*Route, 0)
+	for _, path := range childPaths {
+		result = append(result, &Route{path, nil, nil})
+	}
+	return result
 }
 
 func TestAreRoutesEqual(t *testing.T) {
