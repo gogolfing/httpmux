@@ -29,6 +29,9 @@ func TestNewRoute(t *testing.T) {
 	}
 }
 
+func TestRoute_Find(t *testing.T) {
+}
+
 func TestRoute_FindOrCreateChildWithCommonPrefix(t *testing.T) {
 	tests := []struct {
 		path     string

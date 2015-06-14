@@ -39,7 +39,7 @@ func TestIsEmpty(t *testing.T) {
 	}{
 		{"", true},
 		{"hello, world", false},
-		{"golfmux", false},
+		{"gogolfing/mux", false},
 	}
 	for _, test := range tests {
 		isEmpty := IsEmpty(test.path)
