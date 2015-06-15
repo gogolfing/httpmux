@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	muxpath "github.com/ericelsken/golfmux/path"
+	muxpath "github.com/gogolfing/mux/path"
 )
 
 type Route struct {

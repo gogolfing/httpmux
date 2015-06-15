@@ -3,7 +3,7 @@ package golfmux
 import (
 	"net/http"
 
-	muxpath "github.com/ericelsken/golfmux/path"
+	muxpath "github.com/gogolfing/mux/path"
 )
 
 type Mux struct {

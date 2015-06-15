@@ -1,6 +1,8 @@
 package golfmux
 
-import "testing"
+import (
+	"testing"
+)
 
 var (
 	empty    = newRoute("")
@@ -29,7 +31,58 @@ func TestNewRoute(t *testing.T) {
 	}
 }
 
+func TestRoute_InsertChildPath(t *testing.T) {
+}
+
+func testRoute_IndexChildPath(t *testing.T, root *Route, path string, result *Route) {
+	//root.insertChildPath(path)
+}
+
+func TestLevelOrder(t *testing.T) {
+	leafNil := newRoute("leafNil")
+	leafEmpty := &Route{"leafEmpty", []*Route{}, nil}
+	singleChild := &Route{"singleChild", []*Route{division}, nil}
+	multiChild := &Route{"multiChild", []*Route{another, boy, chooses}, nil}
+	bigsChild := &Route{"bigsChild", []*Route{leafEmpty, singleChild}, nil}
+	big := &Route{"big", []*Route{leafNil, bigsChild, multiChild, frogs}, nil}
+	tests := []struct {
+		root   *Route
+		result []*Route
+	}{
+		{leafNil, []*Route{leafNil}},
+		{leafEmpty, []*Route{leafEmpty}},
+		{singleChild, []*Route{singleChild, division}},
+		{bigsChild, []*Route{bigsChild, leafEmpty, singleChild, division}},
+		{multiChild, []*Route{multiChild, another, boy, chooses}},
+		{big, []*Route{big, leafNil, bigsChild, multiChild, frogs, leafEmpty, singleChild, another, boy, chooses, division}},
+	}
+	for _, test := range tests {
+		result := test.root.levelOrder()
+		if !areRoutesEqual(result, test.result) {
+			t.Errorf("%v.levelOrder() = %v want %v", test.root, result, test.result)
+		}
+	}
+}
+
+func (route *Route) levelOrder() []*Route {
+	result := []*Route{}
+	queue := []*Route{route}
+	for len(queue) > 0 {
+		temp := queue[0]
+		result = append(result, temp)
+		queue = append(queue, temp.children...)
+		queue = queue[1:]
+	}
+	return result
+}
+
 func TestRoute_Find(t *testing.T) {
+	//TODO change this once *Route.find() is done.
+	route := newRoute("route")
+	child := route.find("childPath")
+	if child != nil {
+		t.Fail()
+	}
 }
 
 func TestRoute_FindOrCreateChildWithCommonPrefix(t *testing.T) {
