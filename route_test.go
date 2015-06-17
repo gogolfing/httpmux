@@ -34,8 +34,53 @@ func TestNewRoute(t *testing.T) {
 func TestRoute_InsertChildPath(t *testing.T) {
 }
 
-func testRoute_IndexChildPath(t *testing.T, root *Route, path string, result *Route) {
-	//root.insertChildPath(path)
+func TestRoute_ListPaths(t *testing.T) {
+	root := &Route{
+		"a",
+		[]*Route{
+			newRoute("b"),
+			&Route{
+				"c",
+				[]*Route{newRoute("d"), newRoute("e")},
+				nil,
+			},
+		},
+		nil,
+	}
+	tests := []struct {
+		root   *Route
+		result []string
+	}{
+		{root, []string{"a", "ab", "ac", "acd", "ace"}},
+		{newRoute("nil children"), []string{"nil children"}},
+		{&Route{"simple", []*Route{newRoute("a"), newRoute("b")}, nil}, []string{"simple", "simplea", "simpleb"}},
+	}
+	for _, test := range tests {
+		result := test.root.listPaths()
+		passed := len(result) == len(test.result)
+		if passed {
+			for i, v := range result {
+				if v != test.result[i] {
+					passed = false
+					break
+				}
+			}
+		}
+		if !passed {
+			t.Errorf("%v.listPaths() = %v want %v", test.root, result, test.result)
+		}
+	}
+}
+
+func (route *Route) listPaths() []string {
+	result := []string{route.path}
+	for _, child := range route.children {
+		childPaths := child.listPaths()
+		for _, childPath := range childPaths {
+			result = append(result, route.path+childPath)
+		}
+	}
+	return result
 }
 
 func TestLevelOrder(t *testing.T) {
