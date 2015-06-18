@@ -51,12 +51,16 @@ func TestRoute_insert(t *testing.T) {
 		{"water", "water", []string{"", "slow", "test", "water"}},
 		{"slower", "er", []string{"", "slow", "slower", "test", "water"}},
 	}
+	testRoute_insert(t, tests)
+
 	tests = []insertTest{
 		{"tester", "tester", []string{"", "tester"}},
 		{"test", "test", []string{"", "test", "tester"}},
-		{"team", "am", []string{"", "team", "test", "tester"}},
-		{"toast", "oast", []string{"", "t", "team", "test", "tester", "toast"}},
+		{"team", "am", []string{"", "te", "team", "test", "tester"}},
+		{"toast", "oast", []string{"", "t", "te", "team", "test", "tester", "toast"}},
 	}
+	testRoute_insert(t, tests)
+
 	tests = []insertTest{
 		{"romane", "romane", []string{"", "romane"}},
 		{"romanus", "us", []string{"", "roman", "romane", "romanus"}},
@@ -67,6 +71,7 @@ func TestRoute_insert(t *testing.T) {
 		{"rubicundus", "undus", []string{"", "r", "rom", "roman", "romane", "romanus", "romulus", "rub", "rube", "rubens", "ruber", "rubic", "rubicon", "rubicundus"}},
 	}
 	testRoute_insert(t, tests)
+
 	//reverse order of previous suite. any permutation should result in the same trie at the final step.
 	tests = []insertTest{
 		{"rubicundus", "rubicundus", []string{"", "rubicundus"}},
