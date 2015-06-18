@@ -1,6 +1,7 @@
 package golfmux
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -31,10 +32,98 @@ func TestNewRoute(t *testing.T) {
 	}
 }
 
-func TestRoute_InsertChildPath(t *testing.T) {
+type insertTest struct {
+	path        string
+	resultPath  string
+	resultPaths []string
 }
 
-func TestRoute_ListPaths(t *testing.T) {
+func TestRoute_insert(t *testing.T) {
+	//from https://en.wikipedia.org/wiki/Radix_tree
+	tests := []insertTest{
+		{"romane", "romane", []string{"", "romane"}},
+		{"romanus", "us", []string{"", "roman", "romane", "romanus"}},
+		{"romulus", "ulus", []string{"", "rom", "roman", "romane", "romanus", "romulus"}},
+		{"rubens", "ubens", []string{"", "r", "rom", "roman", "romane", "romanus", "romulus", "rubens"}},
+		{"ruber", "r", []string{"", "r", "rom", "roman", "romane", "romanus", "romulus", "rube", "rubens", "ruber"}},
+		{"rubicon", "icon", []string{"", "r", "rom", "roman", "romane", "romanus", "romulus", "rub", "rube", "rubens", "ruber", "rubicon"}},
+		{"rubicundus", "undus", []string{"", "r", "rom", "roman", "romane", "romanus", "romulus", "rub", "rube", "rubens", "ruber", "rubic", "rubicon", "rubicundus"}},
+	}
+	testRoute_insert(t, tests)
+	//reverse order of previous tests. any permutation should result in the same trie.
+	tests = []insertTest{
+		{"rubicundus", "rubicundus", []string{"", "rubicundus"}},
+		{"rubicon", "on", []string{"", "rubic", "rubicon", "rubicundus"}},
+		{"ruber", "er", []string{"", "rub", "ruber", "rubic", "rubicon", "rubicundus"}},
+		{"rubens", "ns", []string{"", "rub", "rube", "rubens", "ruber", "rubic", "rubicon", "rubicundus"}},
+		{"romulus", "omulus", []string{"", "r", "romulus", "rub", "rube", "rubens", "ruber", "rubic", "rubicon", "rubicundus"}},
+		{"romanus", "anus", []string{"", "r", "rom", "romanus", "romulus", "rub", "rube", "rubens", "ruber", "rubic", "rubicon", "rubicundus"}},
+		{"romane", "e", []string{"", "r", "rom", "roman", "romane", "romanus", "romulus", "rub", "rube", "rubens", "ruber", "rubic", "rubicon", "rubicundus"}},
+	}
+	testRoute_insert(t, tests)
+}
+
+func testRoute_insert(t *testing.T, tests []insertTest) {
+	root := newRoute("")
+	emptyResult := root.insert("")
+	if emptyResult != root {
+		t.Fail()
+	}
+	for _, test := range tests {
+		result := root.insert(test.path)
+		resultPaths := root.listAllPaths()
+		if result.path != test.resultPath || !reflect.DeepEqual(resultPaths, test.resultPaths) {
+			t.Errorf("insert(%q) = %q, %v want %q, %v", test.path, result.path, resultPaths, test.resultPath, test.resultPaths)
+		}
+	}
+}
+
+func TestRoute_insertChildPath(t *testing.T) {
+	root := newRoute("root")
+	emptyResult := root.insertChildPath("")
+	if emptyResult != root {
+		t.Fail()
+	}
+	tests := []struct {
+		path        string
+		resultPath  string
+		resultPaths []string
+	}{
+		{"math", "math", []string{"root", "rootmath"}},
+		{"mathematics", "ematics", []string{"root", "rootmath", "rootmathematics"}},
+		{"maybe", "ybe", []string{"root", "rootma", "rootmath", "rootmathematics", "rootmaybe"}},
+		{"div", "div", []string{"root", "rootdiv", "rootma", "rootmath", "rootmathematics", "rootmaybe"}},
+	}
+	for _, test := range tests {
+		result := root.insertChildPath(test.path)
+		resultPaths := root.listAllPaths()
+		if result.path != test.resultPath || !reflect.DeepEqual(resultPaths, test.resultPaths) {
+			t.Errorf("%v.insertChildPath(%q) = %v, %v want %v %v", root, test.path, result, resultPaths, test.resultPath, test.resultPaths)
+		}
+	}
+}
+
+func TestRoute_splitPathToPrefix(t *testing.T) {
+	tests := []struct {
+		path        string
+		prefix      string
+		resultPaths []string
+	}{
+		{"root", "", []string{"root"}},
+		{"root", "ro", []string{"ro", "root"}},
+		{"root", "root", []string{"root"}},
+	}
+	for _, test := range tests {
+		route := newRoute(test.path)
+		route.splitPathToPrefix(test.prefix)
+		resultPaths := route.listAllPaths()
+		if !reflect.DeepEqual(resultPaths, test.resultPaths) {
+			t.Errorf("%v.splitPathToPrefix(%q) = %v want %v", route, test.prefix, resultPaths, test.resultPaths)
+		}
+	}
+}
+
+func TestRoute_listAllPaths(t *testing.T) {
 	root := &Route{
 		"a",
 		[]*Route{
@@ -56,26 +145,17 @@ func TestRoute_ListPaths(t *testing.T) {
 		{&Route{"simple", []*Route{newRoute("a"), newRoute("b")}, nil}, []string{"simple", "simplea", "simpleb"}},
 	}
 	for _, test := range tests {
-		result := test.root.listPaths()
-		passed := len(result) == len(test.result)
-		if passed {
-			for i, v := range result {
-				if v != test.result[i] {
-					passed = false
-					break
-				}
-			}
-		}
-		if !passed {
-			t.Errorf("%v.listPaths() = %v want %v", test.root, result, test.result)
+		result := test.root.listAllPaths()
+		if !reflect.DeepEqual(result, test.result) {
+			t.Errorf("%v.listAllPaths() = %v want %v", test.root, result, test.result)
 		}
 	}
 }
 
-func (route *Route) listPaths() []string {
+func (route *Route) listAllPaths() []string {
 	result := []string{route.path}
 	for _, child := range route.children {
-		childPaths := child.listPaths()
+		childPaths := child.listAllPaths()
 		for _, childPath := range childPaths {
 			result = append(result, route.path+childPath)
 		}
@@ -121,7 +201,7 @@ func (route *Route) levelOrder() []*Route {
 	return result
 }
 
-func TestRoute_Find(t *testing.T) {
+func TestRoute_find(t *testing.T) {
 	//TODO change this once *Route.find() is done.
 	route := newRoute("route")
 	child := route.find("childPath")
@@ -130,7 +210,7 @@ func TestRoute_Find(t *testing.T) {
 	}
 }
 
-func TestRoute_FindOrCreateChildWithCommonPrefix(t *testing.T) {
+func TestRoute_findOrCreateChildWithCommonPrefix(t *testing.T) {
 	tests := []struct {
 		path     string
 		children []*Route
@@ -168,7 +248,7 @@ func TestRoute_FindOrCreateChildWithCommonPrefix(t *testing.T) {
 	}
 }
 
-func TestRoute_FindChildWithCommonPrefix(t *testing.T) {
+func TestRoute_findChildWithCommonPrefix(t *testing.T) {
 	tests := []struct {
 		path     string
 		children []*Route
@@ -199,7 +279,7 @@ func TestRoute_FindChildWithCommonPrefix(t *testing.T) {
 	}
 }
 
-func TestRoute_IndexOfCommonPrefixChild(t *testing.T) {
+func TestRoute_indexOfCommonPrefixChild(t *testing.T) {
 	tests := []struct {
 		path       string
 		childPaths []string
@@ -230,7 +310,7 @@ func TestRoute_IndexOfCommonPrefixChild(t *testing.T) {
 	}
 }
 
-func TestRoute_InsertChildAtIndex(t *testing.T) {
+func TestRoute_insertChildAtIndex(t *testing.T) {
 	one := newRoute("one")
 	two := newRoute("two")
 	three := newRoute("three")

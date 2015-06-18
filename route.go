@@ -36,33 +36,37 @@ func (route *Route) SubRoute(path string) *Route {
 func (route *Route) insert(path string) *Route {
 	prefix := muxpath.CommonPrefix(path, route.path)
 	if len(prefix) > 0 {
-		//path does share a prefix with this route.
+		//path shares a prefix with this route.
 		childPath := path[len(prefix):]
 		if len(prefix) == len(route.path) {
 			return route.insertChildPath(childPath)
 		}
-		route.splitPathWithPrefix(prefix)
+		route.splitPathToPrefix(prefix)
 		return route.insertChildPath(childPath)
 	}
 	//path does not share a prefix with this route.
 	return route.insertChildPath(path)
 }
 
-func (route *Route) splitPathWithPrefix(prefix string) *Route {
-	childPath := route.path[len(prefix):]
-	child := &Route{childPath, route.children, route.routeHandler}
-	route.children = []*Route{child}
-	route.path = prefix
-	return route.insertChildPath(childPath)
-}
-
 func (route *Route) insertChildPath(childPath string) *Route {
 	if len(childPath) == 0 {
 		return route
 	}
-	child, childPrefix := route.findOrCreateChildWithCommonPrefix(childPath)
-	remainingPath := childPath[len(childPrefix):]
-	return child.insert(remainingPath)
+	child, _ := route.findOrCreateChildWithCommonPrefix(childPath)
+	return child.insert(childPath)
+}
+
+func (route *Route) splitPathToPrefix(prefix string) {
+	if len(prefix) == 0 {
+		return
+	}
+	childPath := route.path[len(prefix):]
+	if len(childPath) == 0 {
+		return
+	}
+	child := &Route{childPath, route.children, route.routeHandler}
+	route.children = []*Route{child}
+	route.path = prefix
 }
 
 func (route *Route) find(path string) *Route {
