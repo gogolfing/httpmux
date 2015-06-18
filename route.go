@@ -30,7 +30,7 @@ func (route *Route) getHandler(r *http.Request, path string) (http.Handler, erro
 }
 
 func (route *Route) SubRoute(path string) *Route {
-	return route.insert(path)
+	return route.insertChildPath(path)
 }
 
 func (route *Route) insert(path string) *Route {
