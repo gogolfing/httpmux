@@ -44,6 +44,7 @@ func TestRoute_insert(t *testing.T) {
 	if emptyResult != root {
 		t.Fail()
 	}
+
 	//from https://en.wikipedia.org/wiki/Radix_tree
 	tests := []insertTest{
 		{"test", "test", []string{"", "test"}},
