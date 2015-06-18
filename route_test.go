@@ -39,8 +39,25 @@ type insertTest struct {
 }
 
 func TestRoute_insert(t *testing.T) {
+	root := newRoute("root")
+	emptyResult := root.insert("")
+	if emptyResult != root {
+		t.Fail()
+	}
 	//from https://en.wikipedia.org/wiki/Radix_tree
 	tests := []insertTest{
+		{"test", "test", []string{"", "test"}},
+		{"slow", "slow", []string{"", "slow", "test"}},
+		{"water", "water", []string{"", "slow", "test", "water"}},
+		{"slower", "er", []string{"", "slow", "slower", "test", "water"}},
+	}
+	tests = []insertTest{
+		{"tester", "tester", []string{"", "tester"}},
+		{"test", "test", []string{"", "test", "tester"}},
+		{"team", "am", []string{"", "team", "test", "tester"}},
+		{"toast", "oast", []string{"", "t", "team", "test", "tester", "toast"}},
+	}
+	tests = []insertTest{
 		{"romane", "romane", []string{"", "romane"}},
 		{"romanus", "us", []string{"", "roman", "romane", "romanus"}},
 		{"romulus", "ulus", []string{"", "rom", "roman", "romane", "romanus", "romulus"}},
@@ -50,7 +67,7 @@ func TestRoute_insert(t *testing.T) {
 		{"rubicundus", "undus", []string{"", "r", "rom", "roman", "romane", "romanus", "romulus", "rub", "rube", "rubens", "ruber", "rubic", "rubicon", "rubicundus"}},
 	}
 	testRoute_insert(t, tests)
-	//reverse order of previous tests. any permutation should result in the same trie.
+	//reverse order of previous suite. any permutation should result in the same trie at the final step.
 	tests = []insertTest{
 		{"rubicundus", "rubicundus", []string{"", "rubicundus"}},
 		{"rubicon", "on", []string{"", "rubic", "rubicon", "rubicundus"}},
@@ -65,10 +82,6 @@ func TestRoute_insert(t *testing.T) {
 
 func testRoute_insert(t *testing.T, tests []insertTest) {
 	root := newRoute("")
-	emptyResult := root.insert("")
-	if emptyResult != root {
-		t.Fail()
-	}
 	for _, test := range tests {
 		result := root.insert(test.path)
 		resultPaths := root.listAllPaths()
@@ -143,6 +156,7 @@ func TestRoute_listAllPaths(t *testing.T) {
 		{root, []string{"a", "ab", "ac", "acd", "ace"}},
 		{newRoute("nil children"), []string{"nil children"}},
 		{&Route{"simple", []*Route{newRoute("a"), newRoute("b")}, nil}, []string{"simple", "simplea", "simpleb"}},
+		{&Route{"a", []*Route{&Route{"b", []*Route{newRoute("c")}, nil}}, nil}, []string{"a", "ab", "abc"}},
 	}
 	for _, test := range tests {
 		result := test.root.listAllPaths()
