@@ -17,9 +17,8 @@ func New() *Mux {
 }
 
 func NewHandlers(notFound, methodNotAllowed http.Handler) *Mux {
-	rootRoute := newRoute(muxpath.Root)
 	return &Mux{
-		rootRoute,
+		newRoute(""),
 		notFound,
 		methodNotAllowed,
 	}
