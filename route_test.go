@@ -122,7 +122,7 @@ func TestRoute_insertChildPath(t *testing.T) {
 	}
 }
 
-func TestRoute_splitPathToPrefix(t *testing.T) {
+func TestRoute_splitPathToPrefix_building(t *testing.T) {
 	tests := []struct {
 		path        string
 		prefix      string
@@ -139,6 +139,26 @@ func TestRoute_splitPathToPrefix(t *testing.T) {
 		if !reflect.DeepEqual(resultPaths, test.resultPaths) {
 			t.Errorf("%v.splitPathToPrefix(%q) = %v want %v", route, test.prefix, resultPaths, test.resultPaths)
 		}
+	}
+}
+
+func TestRoute_splitPathToPrefix_newChild(t *testing.T) {
+	rh := &routeHandler{}
+	teamChildren := []*Route{newRoute("mates"), newRoute("_sub")}
+	team := &Route{"team", teamChildren, rh}
+	team.splitPathToPrefix("te")
+	resultPaths := team.listAllPaths()
+	if !reflect.DeepEqual(resultPaths, []string{"te", "team", "teammates", "team_sub"}) {
+		t.Error("resultPaths are not what they should be")
+	}
+	if len(team.children) != 1 {
+		t.Error("len(team.children) should be 1")
+	}
+	if !areRoutesEqual(team.children[0].children, teamChildren) {
+		t.Error("team's child's children are not what they should be")
+	}
+	if team.children[0].routeHandler != rh {
+		t.Error("teams's child's routeHandler is not what it should be")
 	}
 }
 
@@ -277,6 +297,7 @@ func TestRoute_findChildWithCommonPrefix(t *testing.T) {
 		prefix   string
 	}{
 		{"", []*Route{}, nil, -1, ""},
+		{"hello", nil, nil, -1, ""},
 		{"hello", []*Route{}, nil, -1, ""},
 		{"", []*Route{a, b}, nil, -1, ""},
 		{"", []*Route{empty, hello}, empty, 0, ""},

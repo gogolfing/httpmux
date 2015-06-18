@@ -70,6 +70,18 @@ func (route *Route) splitPathToPrefix(prefix string) {
 }
 
 func (route *Route) find(path string) *Route {
+	var found *Route = nil
+	child := route
+	prefix := muxpath.CommonPrefix(child.path, path)
+	for len(prefix) == len(child.path) {
+		found = child
+		path = path[len(prefix):]
+		child, _, prefix = found.findChildWithCommonPrefix(path)
+	}
+	//not found OR exact match on path OR no children.
+	if found == nil || len(path) == 0 || len(found.children) == 0 {
+		return found
+	}
 	return nil
 }
 
