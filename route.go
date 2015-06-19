@@ -29,6 +29,13 @@ func (route *Route) getHandler(r *http.Request, path string) (http.Handler, erro
 	return found.routeHandler.getHandler(r)
 }
 
+func (route *Route) find(path string) (*Route, int, string) {
+	var parent *Route = nil
+	child := route
+	index, prefix := -1, muxpath.CommonPrefix(child.path, path)
+	for len(prefix)
+}
+
 func (route *Route) find(path string) *Route {
 	var found *Route = nil
 	child := route

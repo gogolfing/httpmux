@@ -33,6 +33,24 @@ func TestNewRoute(t *testing.T) {
 }
 
 func TestRoute_getHandler(t *testing.T) {
+	//	tests := []struct {
+	//		rootPath string
+	//		paths    []string
+	//		notFound []string
+	//	}{
+	//		{"", []string{""}, []string{}},
+	//		{"root", []string{"root"}, []string{"ro"}},
+	//		{"", []string{"test", "team"}, []string{"te", "", "hello"}},
+	//		{"", []string{"romane", "romanus", "romulus", "rubens", "ruber", "rubicon", "rubicundus"}, []string{"", "r", "rom"}},
+	//	}
+	//	for _, test := range tests {
+	//		root := newRoute(test.rootPath)
+	//		var _, path := range test.paths {
+	//			route := root.insert(path)
+	//			route.routeHandler := &routeHandler{}
+	//
+	//		}
+	//	}
 }
 
 func TestRoute_find(t *testing.T) {
@@ -47,14 +65,6 @@ func TestRoute_find(t *testing.T) {
 		notFound []string
 	}{
 		{
-			"root",
-			[]string{"root"},
-			[]foundStruct{
-				{"rooted", "root"},
-			},
-			[]string{"hello", "ro", ""},
-		},
-		{
 			"",
 			[]string{""},
 			[]foundStruct{
@@ -62,6 +72,14 @@ func TestRoute_find(t *testing.T) {
 				{"a", ""},
 			},
 			[]string{},
+		},
+		{
+			"root",
+			[]string{"root"},
+			[]foundStruct{
+				{"rooted", "root"},
+			},
+			[]string{"hello", "ro", ""},
 		},
 		{
 			"",
