@@ -32,6 +32,83 @@ func TestNewRoute(t *testing.T) {
 	}
 }
 
+func TestRoute_getHandler(t *testing.T) {
+}
+
+func TestRoute_find(t *testing.T) {
+	type foundStruct struct {
+		path      string
+		foundPath string
+	}
+	tests := []struct {
+		rootPath string
+		paths    []string
+		found    []foundStruct
+		notFound []string
+	}{
+		{
+			"root",
+			[]string{"root"},
+			[]foundStruct{
+				{"rooted", "root"},
+			},
+			[]string{"hello", "ro", ""},
+		},
+		{
+			"",
+			[]string{""},
+			[]foundStruct{
+				{"hello", ""},
+				{"a", ""},
+			},
+			[]string{},
+		},
+		{
+			"",
+			[]string{"romane", "romanus", "romulus", "rubens", "ruber", "rubicon", "rubicundus"},
+			[]foundStruct{
+				{"ruber_andsomethingmore", "ruber"},
+			},
+			[]string{},
+		},
+		{
+			"",
+			[]string{"rubicundud", "rubicon", "ruber", "rubens", "romulus", "romanus", "romane"},
+			[]foundStruct{
+				{"ruber_andsomethingmore", "ruber"},
+			},
+			[]string{},
+		},
+	}
+	for _, test := range tests {
+		root := newRoute(test.rootPath)
+		routeHandlers := map[string]*routeHandler{}
+		for _, path := range test.paths {
+			route := root.insert(path)
+			route.routeHandler = &routeHandler{}
+			routeHandlers[path] = route.routeHandler
+		}
+		//fmt.Println(root.levelOrder())
+		for _, path := range test.paths {
+			result := root.find(path)
+			if result.routeHandler != routeHandlers[path] {
+				t.Errorf("find(%q) = %v want %v", path, result, routeHandlers[path])
+			}
+		}
+		for _, pair := range test.found {
+			if root.find(pair.path) != root.find(pair.foundPath) {
+				t.Errorf("%v.find(%q) != %v.find(%q) want equality", root, pair.path, root, pair.foundPath)
+			}
+		}
+		for _, path := range test.notFound {
+			result := root.find(path)
+			if result != nil {
+				t.Errorf("%v.find(%q) = %v want %v", root, path, result, nil)
+			}
+		}
+	}
+}
+
 type insertTest struct {
 	path        string
 	resultPath  string
@@ -99,7 +176,7 @@ func testRoute_insert(t *testing.T, tests []insertTest) {
 
 func TestRoute_insertChildPath(t *testing.T) {
 	root := newRoute("root")
-	emptyResult := root.insertChildPath("")
+	emptyResult := root.SubRoute("")
 	if emptyResult != root {
 		t.Fail()
 	}
@@ -239,15 +316,6 @@ func (route *Route) levelOrder() []*Route {
 		queue = queue[1:]
 	}
 	return result
-}
-
-func TestRoute_find(t *testing.T) {
-	//TODO change this once *Route.find() is done.
-	route := newRoute("route")
-	child := route.find("childPath")
-	if child != nil {
-		t.Fail()
-	}
 }
 
 func TestRoute_findOrCreateChildWithCommonPrefix(t *testing.T) {
