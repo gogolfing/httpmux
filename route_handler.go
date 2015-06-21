@@ -1,4 +1,4 @@
-package golfmux
+package mux
 
 import "net/http"
 

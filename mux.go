@@ -1,4 +1,4 @@
-package golfmux
+package mux
 
 import (
 	"net/http"
@@ -7,7 +7,7 @@ import (
 )
 
 type Mux struct {
-	*Route
+	trie                    *trie
 	notFoundHandler         http.Handler
 	methodNotAllowedHandler http.Handler
 }
@@ -18,7 +18,7 @@ func New() *Mux {
 
 func NewHandlers(notFound, methodNotAllowed http.Handler) *Mux {
 	return &Mux{
-		newRoute(""),
+		newTrie(),
 		notFound,
 		methodNotAllowed,
 	}
@@ -37,7 +37,7 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *Mux) getHandler(r *http.Request, path string) (http.Handler, error) {
-	return m.Route.getHandler(r, path)
+	return m.trie.getHandler(r, path)
 }
 
 func (m *Mux) serveError(w http.ResponseWriter, r *http.Request, err error) {
