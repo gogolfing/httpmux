@@ -1,6 +1,9 @@
 package mux
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 var (
 	empty    = newRoute("")
@@ -36,6 +39,57 @@ func TestNewRoute(t *testing.T) {
 	}
 }
 
+func TestRoute_insertSplitChild(t *testing.T) {
+	tests := []struct {
+		root    *Route
+		oldPath string
+		newPath string
+	}{
+		{
+			newRoute("",
+				newRoute("hello"),
+			),
+			"hello",
+			"he",
+		},
+		{
+			newRoute("",
+				newRoute("another"),
+				newRoute("baseball"),
+				newRoute("car"),
+				newRoute("diamond"),
+				newRoute("hello"),
+				newRoute("world"),
+			),
+			"hello",
+			"hell",
+		},
+	}
+	for _, test := range tests {
+		_, expectedOldRoute, remainingPath := test.root.findSubRoute(test.oldPath)
+		_, expectedIndex, _ := test.root.findChildWithCommonPrefix(test.oldPath)
+		if expectedOldRoute == nil || len(remainingPath) > 0 {
+			t.Errorf("route.findSubRoute(%q) = %v, %q is incorrect", test.oldPath, expectedOldRoute, remainingPath)
+		}
+		expectedOldRoute.routeHandler = &routeHandler{}
+
+		expectedNewRoute := test.root.insertSplitChild(test.newPath)
+
+		_, oldRoute, remaingPath := test.root.findSubRoute(test.oldPath)
+		if oldRoute != expectedOldRoute || len(remaingPath) > 0 || !reflect.DeepEqual(oldRoute, expectedOldRoute) {
+			t.Errorf("route.insertSplitChild(%q) oldRoute = %v want %v", test.oldPath, oldRoute, expectedOldRoute)
+		}
+		_, newRoute, remaingPath := test.root.findSubRoute(test.newPath)
+		if newRoute != expectedNewRoute || len(remainingPath) > 0 {
+			t.Errorf("route.insertSplitChild(%q) newRoute = %v want %v", test.newPath, newRoute, expectedNewRoute)
+		}
+		_, index, _ := test.root.findChildWithCommonPrefix(test.newPath)
+		if index != expectedIndex {
+			t.Errorf("route.insertSplitChild(%q) index = %v want %v", test.newPath, index, expectedIndex)
+		}
+	}
+}
+
 func TestRoute_findSubRoute(t *testing.T) {
 	t.Log("root with no children")
 	root := newRoute("")
@@ -52,7 +106,7 @@ func TestRoute_findSubRoute(t *testing.T) {
 	root = newRoute("", helloRoute)
 	testRoute_findSubRoute(t, root, "", root, nil, "")
 	testRoute_findSubRoute(t, root, "he", root, helloRoute, "he")
-	testRoute_findSubRoute(t, root, "hello", helloRoute, nil, "")
+	testRoute_findSubRoute(t, root, "hello", root, helloRoute, "")
 	testRoute_findSubRoute(t, root, "hello, world", helloRoute, nil, ", world")
 	testRoute_findSubRoute(t, root, "another", root, nil, "another")
 
@@ -62,8 +116,8 @@ func TestRoute_findSubRoute(t *testing.T) {
 	root = newRoute("", helloRoute)
 	testRoute_findSubRoute(t, root, "", root, nil, "")
 	testRoute_findSubRoute(t, root, "he", root, helloRoute, "he")
-	testRoute_findSubRoute(t, root, "hello", helloRoute, nil, "")
-	testRoute_findSubRoute(t, root, "hello, world", worldRoute, nil, "")
+	testRoute_findSubRoute(t, root, "hello", root, helloRoute, "")
+	testRoute_findSubRoute(t, root, "hello, world", helloRoute, worldRoute, "")
 	testRoute_findSubRoute(t, root, "another", root, nil, "another")
 	testRoute_findSubRoute(t, root, "hello, wo", helloRoute, worldRoute, ", wo")
 }

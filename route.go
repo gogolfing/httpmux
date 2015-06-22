@@ -21,6 +21,10 @@ func newRoute(path string, children ...*Route) *Route {
 	}
 }
 
+func (route *Route) SubRoute(path string) *Route {
+	return route.insertSubRoute(path)
+}
+
 func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
 	if route.routeHandler == nil {
 		return nil, ErrNotFound
@@ -48,7 +52,7 @@ func (route *Route) insertLeaf(path string) *Route {
 func (route *Route) insertSplitChild(path string) *Route {
 	oldChild, index, _ := route.findChildWithCommonPrefix(path)
 	newChild := newRoute(path, oldChild)
-	route.children[index] = oldChild
+	route.children[index] = newChild
 	oldChild.path = oldChild.path[len(path):]
 	return newChild
 }
@@ -56,86 +60,16 @@ func (route *Route) insertSplitChild(path string) *Route {
 func (route *Route) findSubRoute(path string) (*Route, *Route, string) {
 	parent := route
 	child, _, prefix := parent.findChildWithCommonPrefix(path)
-	for child != nil && len(prefix) == len(child.path) {
+	for child != nil && len(path) > 0 && len(prefix) == len(child.path) {
 		path = path[len(prefix):]
+		if len(path) == 0 {
+			break
+		}
 		parent = child
 		child, _, prefix = parent.findChildWithCommonPrefix(path)
 	}
 	return parent, child, path
 }
-
-//func (route *Route) find(path string) (*Route, int, string) {
-//	var parent *Route = nil
-//	child := route
-//	index, prefix := -1, muxpath.CommonPrefix(child.path, path)
-//	for len(prefix)
-//}
-//
-//func (route *Route) find(path string) *Route {
-//	var found *Route = nil
-//	child := route
-//	prefix := muxpath.CommonPrefix(child.path, path)
-//	for child != nil && len(prefix) == len(child.path) {
-//		found = child
-//		path = path[len(prefix):]
-//		child, _, prefix = found.findChildWithCommonPrefix(path)
-//	}
-//	//not found OR exact match on path OR no children.
-//	if found == nil || len(path) == 0 || len(found.children) == 0 {
-//		return found
-//	}
-//	return nil
-//}
-//
-//func (route *Route) SubRoute(path string) *Route {
-//	return route.insertChildPath(path)
-//}
-//
-//func (route *Route) insert(path string) *Route {
-//	prefix := muxpath.CommonPrefix(path, route.path)
-//	if len(prefix) > 0 {
-//		//path shares a prefix with this route.
-//		childPath := path[len(prefix):]
-//		if len(prefix) == len(route.path) {
-//			return route.insertChildPath(childPath)
-//		}
-//		route.splitPathToPrefix(prefix)
-//		return route.insertChildPath(childPath)
-//	}
-//	//path does not share a prefix with this route.
-//	return route.insertChildPath(path)
-//}
-//
-//func (route *Route) insertChildPath(childPath string) *Route {
-//	if len(childPath) == 0 {
-//		return route
-//	}
-//	child, _ := route.findOrCreateChildWithCommonPrefix(childPath)
-//	return child.insert(childPath)
-//}
-//
-//func (route *Route) splitPathToPrefix(prefix string) {
-//	if len(prefix) == 0 {
-//		return
-//	}
-//	childPath := route.path[len(prefix):]
-//	if len(childPath) == 0 {
-//		return
-//	}
-//	child := &Route{childPath, route.children, route.routeHandler}
-//	route.children = []*Route{child}
-//	route.path = prefix
-//}
-//
-//func (route *Route) findOrCreateChildWithCommonPrefix(path string) (*Route, string) {
-//	child, index, prefix := route.findChildWithCommonPrefix(path)
-//	if child != nil {
-//		return child, prefix
-//	}
-//	child = &Route{path, nil, nil}
-//	route.insertChildAtIndex(child, ^index)
-//	return child, path
-//}
 
 func (route *Route) findChildWithCommonPrefix(path string) (*Route, int, string) {
 	index, prefix := route.indexOfCommonPrefixChild(path)
