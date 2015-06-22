@@ -120,6 +120,7 @@ func TestRoute_findSubRoute(t *testing.T) {
 	testRoute_findSubRoute(t, root, "hello, world", helloRoute, worldRoute, "")
 	testRoute_findSubRoute(t, root, "another", root, nil, "another")
 	testRoute_findSubRoute(t, root, "hello, wo", helloRoute, worldRoute, ", wo")
+	testRoute_findSubRoute(t, root, "hello, world, again", worldRoute, nil, ", again")
 }
 
 func testRoute_findSubRoute(t *testing.T, root *Route, path string, expectedParent, expectedFound *Route, expectedRemainingPath string) {
