@@ -3,6 +3,8 @@ package mux
 import (
 	"fmt"
 	"net/http"
+
+	muxpath "github.com/gogolfing/mux/path"
 )
 
 type Route struct {
@@ -24,6 +26,17 @@ func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
 		return nil, ErrNotFound
 	}
 	return route.routeHandler.getHandler(r)
+}
+
+func (route *Route) findSubRoute(path string) (*Route, *Route, string) {
+	parent := route
+	child, prefix := parent.findChildWithCommonPrefix(path)
+	fmt.Println("setup before find loop", child, prefix)
+	for ; child != nil && len(prefix) == len(child.path); child, prefix = parent.findChildWithCommonPrefix(path) {
+		path = path[len(prefix):]
+		parent = child
+	}
+	return parent, child, path
 }
 
 //func (route *Route) find(path string) (*Route, int, string) {
@@ -98,33 +111,33 @@ func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
 //	route.insertChildAtIndex(child, ^index)
 //	return child, path
 //}
-//
-//func (route *Route) findChildWithCommonPrefix(path string) (*Route, int, string) {
-//	index, prefix := route.indexOfCommonPrefixChild(path)
-//	if index >= 0 {
-//		return route.children[index], index, prefix
-//	}
-//	return nil, index, prefix
-//}
-//
-//func (route *Route) indexOfCommonPrefixChild(path string) (int, string) {
-//	low, high := 0, len(route.children)
-//	for low < high {
-//		mid := (low + high) >> 1
-//		comparison, prefix := muxpath.CompareIgnorePrefix(path, route.children[mid].path)
-//		if len(prefix) > 0 {
-//			return mid, prefix
-//		} else if comparison == 0 {
-//			return mid, path
-//		} else if comparison < 0 {
-//			high = mid
-//		} else { //comparison must be > 0.
-//			low = mid + 1
-//		}
-//	}
-//	return ^high, ""
-//}
-//
+
+func (route *Route) findChildWithCommonPrefix(path string) (*Route, string) {
+	index, prefix := route.indexOfCommonPrefixChild(path)
+	if index >= 0 {
+		return route.children[index], prefix
+	}
+	return nil, prefix
+}
+
+func (route *Route) indexOfCommonPrefixChild(path string) (int, string) {
+	low, high := 0, len(route.children)
+	for low < high {
+		mid := (low + high) >> 1
+		comparison, prefix := muxpath.CompareIgnorePrefix(path, route.children[mid].path)
+		if len(prefix) > 0 {
+			return mid, prefix
+		} else if comparison == 0 {
+			return mid, path
+		} else if comparison < 0 {
+			high = mid
+		} else { //comparison must be > 0.
+			low = mid + 1
+		}
+	}
+	return ^high, ""
+}
+
 //func (route *Route) insertChildAtIndex(child *Route, index int) {
 //	if index < 0 || index > len(route.children) {
 //		return
