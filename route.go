@@ -31,10 +31,10 @@ func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
 func (route *Route) findSubRoute(path string) (*Route, *Route, string) {
 	parent := route
 	child, prefix := parent.findChildWithCommonPrefix(path)
-	fmt.Println("setup before find loop", child, prefix)
-	for ; child != nil && len(prefix) == len(child.path); child, prefix = parent.findChildWithCommonPrefix(path) {
+	for child != nil && len(prefix) == len(child.path) {
 		path = path[len(prefix):]
 		parent = child
+		child, prefix = parent.findChildWithCommonPrefix(path)
 	}
 	return parent, child, path
 }
