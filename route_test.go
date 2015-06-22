@@ -2,6 +2,20 @@ package mux
 
 import "testing"
 
+var (
+	empty    = newRoute("")
+	a        = newRoute("a")
+	b        = newRoute("b")
+	hello    = newRoute("hello")
+	another  = newRoute("another")
+	boy      = newRoute("boy")
+	chooses  = newRoute("chooses")
+	division = newRoute("division")
+	elephant = newRoute("elephant")
+	frogs    = newRoute("frogs")
+	giraffe  = newRoute("giraffe")
+)
+
 func TestNewRoute(t *testing.T) {
 	tests := []struct {
 		path     string
@@ -308,112 +322,104 @@ func testRoute_findSubRoute(t *testing.T, root *Route, path string, expectedPare
 //		}
 //	}
 //}
-//
-//func TestRoute_findChildWithCommonPrefix(t *testing.T) {
-//	tests := []struct {
-//		path     string
-//		children []*Route
-//		child    *Route
-//		index    int
-//		prefix   string
-//	}{
-//		{"", []*Route{}, nil, -1, ""},
-//		{"hello", nil, nil, -1, ""},
-//		{"hello", []*Route{}, nil, -1, ""},
-//		{"", []*Route{a, b}, nil, -1, ""},
-//		{"", []*Route{empty, hello}, empty, 0, ""},
-//		{"character", []*Route{another, boy, chooses, division}, chooses, 2, "ch"},
-//		{"divisor", []*Route{another, boy, chooses, division}, division, 3, "divis"},
-//		{"ant", []*Route{another, boy, chooses, division, elephant, frogs, giraffe}, another, 0, "an"},
-//		{"ant", []*Route{boy, chooses, division, elephant, frogs, giraffe}, nil, -1, ""},
-//		{"hello", []*Route{another, boy, chooses, division, elephant, frogs, giraffe}, nil, -8, ""},
-//		{"boy", []*Route{another, chooses, division, elephant}, nil, -2, ""},
-//		{"boy", []*Route{another, boy, chooses, division, elephant, frogs}, boy, 1, "boy"},
-//		{"boys", []*Route{another, boy, chooses}, boy, 1, "boy"},
-//	}
-//	for _, test := range tests {
-//		route := &Route{"route", test.children, nil}
-//		child, index, prefix := route.findChildWithCommonPrefix(test.path)
-//		if child != test.child || index != test.index || prefix != test.prefix {
-//			t.Errorf("route.findChildWithCOmmonPrefix(%q) = %v, %v, %q want %v, %v, %q",
-//				test.path, child, index, prefix, test.child, test.index, test.prefix)
-//		}
-//	}
-//}
-//
-//func TestRoute_indexOfCommonPrefixChild(t *testing.T) {
-//	tests := []struct {
-//		path       string
-//		childPaths []string
-//		index      int
-//		prefix     string
-//	}{
-//		{"", []string{}, -1, ""},
-//		{"hello", []string{}, -1, ""},
-//		{"", []string{"a", "b"}, -1, ""},
-//		{"", []string{"", "hello"}, 0, ""},
-//		{"character", []string{"another", "boy", "chooses", "division"}, 2, "ch"},
-//		{"divisor", []string{"another", "boy", "chooses", "division"}, 3, "divis"},
-//		{"ant", []string{"another", "boy", "chooses", "division", "elephant", "frogs", "giraffe"}, 0, "an"},
-//		{"ant", []string{"boy", "chooses", "division", "elephant", "frogs", "giraffe"}, -1, ""},
-//		{"hello", []string{"another", "boy", "chooses", "division", "elephant", "frogs", "giraffe"}, -8, ""},
-//		{"boy", []string{"another", "chooses", "division", "elephant"}, -2, ""},
-//		{"boy", []string{"another", "boy", "chooses", "division", "elephant", "frogs"}, 1, "boy"},
-//		{"boys", []string{"another", "boy", "chooses"}, 1, "boy"},
-//	}
-//	for _, test := range tests {
-//		route := &Route{"", makeChildrenWithPaths(test.childPaths), nil}
-//		index, prefix := route.indexOfCommonPrefixChild(test.path)
-//		if index != test.index || prefix != test.prefix {
-//			t.Errorf("route.indexOfCommonPrefixChild(%q) = %v, %q want %v, %q",
-//				test.path, index, prefix, test.index, test.prefix,
-//			)
-//		}
-//	}
-//}
-//
-//func TestRoute_insertChildAtIndex(t *testing.T) {
-//	one := newRoute("one")
-//	two := newRoute("two")
-//	three := newRoute("three")
-//	tests := []struct {
-//		children []*Route
-//		insert   *Route
-//		index    int
-//		result   []*Route
-//	}{
-//		{nil, one, -1, nil},
-//		{nil, one, 2, nil},
-//		{[]*Route{}, one, 2, []*Route{}},
-//		{[]*Route{one}, two, 4, []*Route{one}},
-//		{nil, one, 0, []*Route{one}},
-//		{[]*Route{}, one, 0, []*Route{one}},
-//		{[]*Route{one}, two, 0, []*Route{two, one}},
-//		{[]*Route{one}, two, 1, []*Route{one, two}},
-//		{[]*Route{one, two}, three, 0, []*Route{three, one, two}},
-//		{[]*Route{one, two}, three, 1, []*Route{one, three, two}},
-//		{[]*Route{one, two}, three, 2, []*Route{one, two, three}},
-//		//these should not occur during normal use, but still testing.
-//		{[]*Route{one, two}, nil, 1, []*Route{one, nil, two}},
-//		{[]*Route{one, two}, two, 1, []*Route{one, two, two}},
-//	}
-//	for _, test := range tests {
-//		route := &Route{"route", test.children, nil}
-//		route.insertChildAtIndex(test.insert, test.index)
-//		equals := areRoutesEqual(route.children, test.result)
-//		if !equals {
-//			t.Errorf("%v insertChildAtIndex(%v, %v) = %v want %v", test.children, test.insert, test.index, route.children, test.result)
-//		}
-//	}
-//}
-//
-//func makeChildrenWithPaths(childPaths []string) []*Route {
-//	result := make([]*Route, 0)
-//	for _, path := range childPaths {
-//		result = append(result, &Route{path, nil, nil})
-//	}
-//	return result
-//}
+
+func TestRoute_findChildWithCommonPrefix(t *testing.T) {
+	tests := []struct {
+		path     string
+		children []*Route
+		child    *Route
+		index    int
+		prefix   string
+	}{
+		{"", []*Route{}, nil, -1, ""},
+		{"hello", nil, nil, -1, ""},
+		{"hello", []*Route{}, nil, -1, ""},
+		{"", []*Route{a, b}, nil, -1, ""},
+		{"", []*Route{empty, hello}, empty, 0, ""},
+		{"character", []*Route{another, boy, chooses, division}, chooses, 2, "ch"},
+		{"divisor", []*Route{another, boy, chooses, division}, division, 3, "divis"},
+		{"ant", []*Route{another, boy, chooses, division, elephant, frogs, giraffe}, another, 0, "an"},
+		{"ant", []*Route{boy, chooses, division, elephant, frogs, giraffe}, nil, -1, ""},
+		{"hello", []*Route{another, boy, chooses, division, elephant, frogs, giraffe}, nil, -8, ""},
+		{"boy", []*Route{another, chooses, division, elephant}, nil, -2, ""},
+		{"boy", []*Route{another, boy, chooses, division, elephant, frogs}, boy, 1, "boy"},
+		{"boys", []*Route{another, boy, chooses}, boy, 1, "boy"},
+	}
+	for _, test := range tests {
+		route := newRoute("", test.children...)
+		child, index, prefix := route.findChildWithCommonPrefix(test.path)
+		if child != test.child || index != test.index || prefix != test.prefix {
+			t.Errorf("route.findChildWithCommonPrefix(%q) = %v, %v, %q want %v, %v, %q",
+				test.path, child, index, prefix, test.child, test.index, test.prefix)
+		}
+	}
+}
+
+func TestRoute_indexOfCommonPrefixChild(t *testing.T) {
+	tests := []struct {
+		path     string
+		children []*Route
+		index    int
+		prefix   string
+	}{
+		{"", []*Route{}, -1, ""},
+		{"hello", []*Route{}, -1, ""},
+		{"", []*Route{a, b}, -1, ""},
+		{"", []*Route{empty, hello}, 0, ""},
+		{"character", []*Route{another, boy, chooses, division}, 2, "ch"},
+		{"divisor", []*Route{another, boy, chooses, division}, 3, "divis"},
+		{"ant", []*Route{another, boy, chooses, division, elephant, frogs, giraffe}, 0, "an"},
+		{"ant", []*Route{boy, chooses, division, elephant, frogs, giraffe}, -1, ""},
+		{"hello", []*Route{another, boy, chooses, division, elephant, frogs, giraffe}, -8, ""},
+		{"boy", []*Route{another, chooses, division, elephant}, -2, ""},
+		{"boy", []*Route{another, boy, chooses, division, elephant, frogs}, 1, "boy"},
+		{"boys", []*Route{another, boy, chooses}, 1, "boy"},
+	}
+	for _, test := range tests {
+		route := newRoute("", test.children...)
+		index, prefix := route.indexOfCommonPrefixChild(test.path)
+		if index != test.index || prefix != test.prefix {
+			t.Errorf("route.indexOfCommonPrefixChild(%q) = %v, %q want %v, %q",
+				test.path, index, prefix, test.index, test.prefix,
+			)
+		}
+	}
+}
+
+func TestRoute_insertChildAtIndex(t *testing.T) {
+	one := newRoute("one")
+	two := newRoute("two")
+	three := newRoute("three")
+	tests := []struct {
+		children []*Route
+		insert   *Route
+		index    int
+		result   []*Route
+	}{
+		{nil, one, -1, nil},
+		{nil, one, 2, nil},
+		{[]*Route{}, one, 2, []*Route{}},
+		{[]*Route{one}, two, 4, []*Route{one}},
+		{nil, one, 0, []*Route{one}},
+		{[]*Route{}, one, 0, []*Route{one}},
+		{[]*Route{one}, two, 0, []*Route{two, one}},
+		{[]*Route{one}, two, 1, []*Route{one, two}},
+		{[]*Route{one, two}, three, 0, []*Route{three, one, two}},
+		{[]*Route{one, two}, three, 1, []*Route{one, three, two}},
+		{[]*Route{one, two}, three, 2, []*Route{one, two, three}},
+		//these should not occur during normal use, but still testing.
+		{[]*Route{one, two}, nil, 1, []*Route{one, nil, two}},
+		{[]*Route{one, two}, two, 1, []*Route{one, two, two}},
+	}
+	for _, test := range tests {
+		route := &Route{"route", test.children, nil}
+		route.insertChildAtIndex(test.insert, test.index)
+		equals := areRoutesEqual(route.children, test.result)
+		if !equals {
+			t.Errorf("%v insertChildAtIndex(%v, %v) = %v want %v", test.children, test.insert, test.index, route.children, test.result)
+		}
+	}
+}
 
 func TestAreRoutesEqual(t *testing.T) {
 	one, two := newRoute("one"), newRoute("two")

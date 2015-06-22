@@ -28,13 +28,38 @@ func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
 	return route.routeHandler.getHandler(r)
 }
 
+func (route *Route) insertSubRoute(path string) *Route {
+	parent, found, remainingPath := route.findSubRoute(path)
+	if len(remainingPath) == 0 {
+		return found
+	}
+	if found == nil {
+		return parent.insertLeaf(remainingPath)
+	}
+	return parent.insertSplitChild(remainingPath)
+}
+
+func (route *Route) insertLeaf(path string) *Route {
+	child := newRoute(path)
+	route.insertChildAtIndex(child, 0)
+	return child
+}
+
+func (route *Route) insertSplitChild(path string) *Route {
+	oldChild, index, _ := route.findChildWithCommonPrefix(path)
+	newChild := newRoute(path, oldChild)
+	route.children[index] = oldChild
+	oldChild.path = oldChild.path[len(path):]
+	return newChild
+}
+
 func (route *Route) findSubRoute(path string) (*Route, *Route, string) {
 	parent := route
-	child, prefix := parent.findChildWithCommonPrefix(path)
+	child, _, prefix := parent.findChildWithCommonPrefix(path)
 	for child != nil && len(prefix) == len(child.path) {
 		path = path[len(prefix):]
 		parent = child
-		child, prefix = parent.findChildWithCommonPrefix(path)
+		child, _, prefix = parent.findChildWithCommonPrefix(path)
 	}
 	return parent, child, path
 }
@@ -112,12 +137,12 @@ func (route *Route) findSubRoute(path string) (*Route, *Route, string) {
 //	return child, path
 //}
 
-func (route *Route) findChildWithCommonPrefix(path string) (*Route, string) {
+func (route *Route) findChildWithCommonPrefix(path string) (*Route, int, string) {
 	index, prefix := route.indexOfCommonPrefixChild(path)
 	if index >= 0 {
-		return route.children[index], prefix
+		return route.children[index], index, prefix
 	}
-	return nil, prefix
+	return nil, index, prefix
 }
 
 func (route *Route) indexOfCommonPrefixChild(path string) (int, string) {
@@ -138,22 +163,22 @@ func (route *Route) indexOfCommonPrefixChild(path string) (int, string) {
 	return ^high, ""
 }
 
-//func (route *Route) insertChildAtIndex(child *Route, index int) {
-//	if index < 0 || index > len(route.children) {
-//		return
-//	}
-//	if route.children == nil {
-//		route.children = []*Route{child}
-//		return
-//	}
-//	before := route.children[:index]
-//	after := route.children[index:]
-//	route.children = make([]*Route, 0, len(before)+1+len(after))
-//	route.children = append(route.children, before...)
-//	route.children = append(route.children, child)
-//	route.children = append(route.children, after...)
-//}
-//
+func (route *Route) insertChildAtIndex(child *Route, index int) {
+	if index < 0 || index > len(route.children) {
+		return
+	}
+	if route.children == nil {
+		route.children = []*Route{child}
+		return
+	}
+	before := route.children[:index]
+	after := route.children[index:]
+	route.children = make([]*Route, 0, len(before)+1+len(after))
+	route.children = append(route.children, before...)
+	route.children = append(route.children, child)
+	route.children = append(route.children, after...)
+}
+
 func (route *Route) String() string {
 	return fmt.Sprintf("&Route{%s}", route.path)
 }

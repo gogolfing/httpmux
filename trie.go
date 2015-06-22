@@ -28,5 +28,5 @@ func (t *trie) insert(path string) *Route {
 }
 
 func (t *trie) find(path string) (*Route, *Route, string) {
-	return nil, nil, ""
+	return t.root.findSubRoute(path)
 }
