@@ -66,6 +66,7 @@ func TestRoute_insertSplitChild(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
+		expectedNumberChildren := len(test.root.children)
 		_, expectedOldRoute, remainingPath := test.root.findSubRoute(test.oldPath)
 		_, expectedIndex, _ := test.root.findChildWithCommonPrefix(test.oldPath)
 		if expectedOldRoute == nil || len(remainingPath) > 0 {
@@ -80,12 +81,16 @@ func TestRoute_insertSplitChild(t *testing.T) {
 			t.Errorf("route.insertSplitChild(%q) oldRoute = %v want %v", test.oldPath, oldRoute, expectedOldRoute)
 		}
 		_, newRoute, remaingPath := test.root.findSubRoute(test.newPath)
-		if newRoute != expectedNewRoute || len(remainingPath) > 0 {
+		if newRoute != expectedNewRoute || newRoute.path != test.newPath || len(remainingPath) > 0 {
 			t.Errorf("route.insertSplitChild(%q) newRoute = %v want %v", test.newPath, newRoute, expectedNewRoute)
 		}
 		_, index, _ := test.root.findChildWithCommonPrefix(test.newPath)
 		if index != expectedIndex {
 			t.Errorf("route.insertSplitChild(%q) index = %v want %v", test.newPath, index, expectedIndex)
+		}
+		numberChildren := len(test.root.children)
+		if expectedNumberChildren != numberChildren {
+			t.Errorf("route.insertSplitChild(%q) number of children = %v want %v", test.newPath, numberChildren, expectedNumberChildren)
 		}
 	}
 }
