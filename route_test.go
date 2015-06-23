@@ -39,6 +39,47 @@ func TestNewRoute(t *testing.T) {
 	}
 }
 
+func TestRoute_insertSubRoute_exists(t *testing.T) {
+	root := newRoute("",
+		newRoute("hello"),
+	)
+	result := root.SubRoute("hello")
+	if result != root.children[0] {
+		t.Fail()
+	}
+}
+
+func TestRoute_insertSubRoute_leaf(t *testing.T) {
+	root := newRoute("",
+		newRoute("another"),
+		newRoute("hello"),
+	)
+	result := root.SubRoute("hello, world")
+	if result.path != ", world" || result != root.children[1].children[0] {
+		t.Fail()
+	}
+}
+
+func TestRoute_insertSubRoute_splitChild(t *testing.T) {
+	root := newRoute("",
+		newRoute("hello"),
+	)
+	result := root.SubRoute("he")
+	if result.path != "he" || len(root.children) != 1 || result != root.children[0] {
+		t.Fail()
+	}
+}
+
+func TestRoute_insertLeaf(t *testing.T) {
+	const helloString = "hello"
+	root := newRoute("")
+	result := root.insertLeaf(helloString)
+	if result.path != helloString || len(root.children) != 1 || root.children[0] != result {
+		t.Errorf("%v.insertLeaf(%q) = %q, %v want %q, %v",
+			root, helloString, result.path, root.children, helloString, []*Route{newRoute(helloString)})
+	}
+}
+
 func TestRoute_insertSplitChild(t *testing.T) {
 	tests := []struct {
 		root    *Route
@@ -73,7 +114,6 @@ func TestRoute_insertSplitChild(t *testing.T) {
 			t.Errorf("route.findSubRoute(%q) = %v, %q is incorrect", test.oldPath, expectedOldRoute, remainingPath)
 		}
 		expectedOldRoute.routeHandler = &routeHandler{}
-
 		expectedNewRoute := test.root.insertSplitChild(test.newPath)
 
 		_, oldRoute, remaingPath := test.root.findSubRoute(test.oldPath)
@@ -98,11 +138,6 @@ func TestRoute_insertSplitChild(t *testing.T) {
 func TestRoute_findSubRoute(t *testing.T) {
 	t.Log("root with no children")
 	root := newRoute("")
-	testRoute_findSubRoute(t, root, "", root, nil, "")
-	testRoute_findSubRoute(t, root, "hello", root, nil, "hello")
-
-	t.Log("root with path and no children")
-	root = newRoute("root")
 	testRoute_findSubRoute(t, root, "", root, nil, "")
 	testRoute_findSubRoute(t, root, "hello", root, nil, "hello")
 
@@ -198,71 +233,6 @@ func testRoute_findSubRoute(t *testing.T, root *Route, path string, expectedPare
 //		if result.path != test.resultPath || !reflect.DeepEqual(resultPaths, test.resultPaths) {
 //			t.Errorf("insert(%q) = %q, %v want %q, %v", test.path, result.path, resultPaths, test.resultPath, test.resultPaths)
 //		}
-//	}
-//}
-//
-//func TestRoute_insertChildPath(t *testing.T) {
-//	root := newRoute("root")
-//	emptyResult := root.SubRoute("")
-//	if emptyResult != root {
-//		t.Fail()
-//	}
-//	tests := []struct {
-//		path        string
-//		resultPath  string
-//		resultPaths []string
-//	}{
-//		{"math", "math", []string{"root", "rootmath"}},
-//		{"mathematics", "ematics", []string{"root", "rootmath", "rootmathematics"}},
-//		{"maybe", "ybe", []string{"root", "rootma", "rootmath", "rootmathematics", "rootmaybe"}},
-//		{"div", "div", []string{"root", "rootdiv", "rootma", "rootmath", "rootmathematics", "rootmaybe"}},
-//	}
-//	for _, test := range tests {
-//		result := root.insertChildPath(test.path)
-//		resultPaths := root.listAllPaths()
-//		if result.path != test.resultPath || !reflect.DeepEqual(resultPaths, test.resultPaths) {
-//			t.Errorf("%v.insertChildPath(%q) = %v, %v want %v %v", root, test.path, result, resultPaths, test.resultPath, test.resultPaths)
-//		}
-//	}
-//}
-//
-//func TestRoute_splitPathToPrefix_building(t *testing.T) {
-//	tests := []struct {
-//		path        string
-//		prefix      string
-//		resultPaths []string
-//	}{
-//		{"root", "", []string{"root"}},
-//		{"root", "ro", []string{"ro", "root"}},
-//		{"root", "root", []string{"root"}},
-//	}
-//	for _, test := range tests {
-//		route := newRoute(test.path)
-//		route.splitPathToPrefix(test.prefix)
-//		resultPaths := route.listAllPaths()
-//		if !reflect.DeepEqual(resultPaths, test.resultPaths) {
-//			t.Errorf("%v.splitPathToPrefix(%q) = %v want %v", route, test.prefix, resultPaths, test.resultPaths)
-//		}
-//	}
-//}
-//
-//func TestRoute_splitPathToPrefix_newChild(t *testing.T) {
-//	rh := &routeHandler{}
-//	teamChildren := []*Route{newRoute("mates"), newRoute("_sub")}
-//	team := &Route{"team", teamChildren, rh}
-//	team.splitPathToPrefix("te")
-//	resultPaths := team.listAllPaths()
-//	if !reflect.DeepEqual(resultPaths, []string{"te", "team", "teammates", "team_sub"}) {
-//		t.Error("resultPaths are not what they should be")
-//	}
-//	if len(team.children) != 1 {
-//		t.Error("len(team.children) should be 1")
-//	}
-//	if !areRoutesEqual(team.children[0].children, teamChildren) {
-//		t.Error("team's child's children are not what they should be")
-//	}
-//	if team.children[0].routeHandler != rh {
-//		t.Error("teams's child's routeHandler is not what it should be")
 //	}
 //}
 //
