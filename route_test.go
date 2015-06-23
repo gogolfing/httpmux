@@ -70,6 +70,9 @@ func TestRoute_insertSubRoute_splitChild(t *testing.T) {
 	}
 }
 
+func TestRoute_getHandler(t *testing.T) {
+}
+
 func TestRoute_insertLeaf(t *testing.T) {
 	const helloString = "hello"
 	root := newRoute("")
@@ -171,71 +174,6 @@ func testRoute_findSubRoute(t *testing.T, root *Route, path string, expectedPare
 	}
 }
 
-//type insertTest struct {
-//	path        string
-//	resultPath  string
-//	resultPaths []string
-//}
-//
-//func TestRoute_insert(t *testing.T) {
-//	root := newRoute("root")
-//	emptyResult := root.insert("")
-//	if emptyResult != root {
-//		t.Fail()
-//	}
-//
-//	//from https://en.wikipedia.org/wiki/Radix_tree
-//	tests := []insertTest{
-//		{"test", "test", []string{"", "test"}},
-//		{"slow", "slow", []string{"", "slow", "test"}},
-//		{"water", "water", []string{"", "slow", "test", "water"}},
-//		{"slower", "er", []string{"", "slow", "slower", "test", "water"}},
-//	}
-//	testRoute_insert(t, tests)
-//
-//	tests = []insertTest{
-//		{"tester", "tester", []string{"", "tester"}},
-//		{"test", "test", []string{"", "test", "tester"}},
-//		{"team", "am", []string{"", "te", "team", "test", "tester"}},
-//		{"toast", "oast", []string{"", "t", "te", "team", "test", "tester", "toast"}},
-//	}
-//	testRoute_insert(t, tests)
-//
-//	tests = []insertTest{
-//		{"romane", "romane", []string{"", "romane"}},
-//		{"romanus", "us", []string{"", "roman", "romane", "romanus"}},
-//		{"romulus", "ulus", []string{"", "rom", "roman", "romane", "romanus", "romulus"}},
-//		{"rubens", "ubens", []string{"", "r", "rom", "roman", "romane", "romanus", "romulus", "rubens"}},
-//		{"ruber", "r", []string{"", "r", "rom", "roman", "romane", "romanus", "romulus", "rube", "rubens", "ruber"}},
-//		{"rubicon", "icon", []string{"", "r", "rom", "roman", "romane", "romanus", "romulus", "rub", "rube", "rubens", "ruber", "rubicon"}},
-//		{"rubicundus", "undus", []string{"", "r", "rom", "roman", "romane", "romanus", "romulus", "rub", "rube", "rubens", "ruber", "rubic", "rubicon", "rubicundus"}},
-//	}
-//	testRoute_insert(t, tests)
-//
-//	//reverse order of previous suite. any permutation should result in the same trie at the final step.
-//	tests = []insertTest{
-//		{"rubicundus", "rubicundus", []string{"", "rubicundus"}},
-//		{"rubicon", "on", []string{"", "rubic", "rubicon", "rubicundus"}},
-//		{"ruber", "er", []string{"", "rub", "ruber", "rubic", "rubicon", "rubicundus"}},
-//		{"rubens", "ns", []string{"", "rub", "rube", "rubens", "ruber", "rubic", "rubicon", "rubicundus"}},
-//		{"romulus", "omulus", []string{"", "r", "romulus", "rub", "rube", "rubens", "ruber", "rubic", "rubicon", "rubicundus"}},
-//		{"romanus", "anus", []string{"", "r", "rom", "romanus", "romulus", "rub", "rube", "rubens", "ruber", "rubic", "rubicon", "rubicundus"}},
-//		{"romane", "e", []string{"", "r", "rom", "roman", "romane", "romanus", "romulus", "rub", "rube", "rubens", "ruber", "rubic", "rubicon", "rubicundus"}},
-//	}
-//	testRoute_insert(t, tests)
-//}
-//
-//func testRoute_insert(t *testing.T, tests []insertTest) {
-//	root := newRoute("")
-//	for _, test := range tests {
-//		result := root.insert(test.path)
-//		resultPaths := root.listAllPaths()
-//		if result.path != test.resultPath || !reflect.DeepEqual(resultPaths, test.resultPaths) {
-//			t.Errorf("insert(%q) = %q, %v want %q, %v", test.path, result.path, resultPaths, test.resultPath, test.resultPaths)
-//		}
-//	}
-//}
-//
 //func TestRoute_listAllPaths(t *testing.T) {
 //	root := &Route{
 //		"a",
@@ -315,44 +253,6 @@ func testRoute_findSubRoute(t *testing.T, root *Route, path string, expectedPare
 //	return result
 //}
 //
-//func TestRoute_findOrCreateChildWithCommonPrefix(t *testing.T) {
-//	tests := []struct {
-//		path     string
-//		children []*Route
-//		child    *Route
-//		prefix   string
-//		created  bool
-//	}{
-//		{"", []*Route{}, nil, "", true},
-//		{"hello", []*Route{}, nil, "hello", true},
-//		{"", []*Route{a, b}, nil, "", true},
-//		{"", []*Route{empty, hello}, empty, "", false},
-//		{"character", []*Route{another, boy, chooses, division}, chooses, "ch", false},
-//		{"divisor", []*Route{another, boy, chooses, division}, division, "divis", false},
-//		{"ant", []*Route{another, boy, chooses, division, elephant, frogs, giraffe}, another, "an", false},
-//		{"ant", []*Route{boy, chooses, division, elephant, frogs, giraffe}, nil, "ant", true},
-//		{"hello", []*Route{another, boy, chooses, division, elephant, frogs, giraffe}, nil, "hello", true},
-//		{"boy", []*Route{another, chooses, division, elephant}, nil, "boy", true},
-//		{"boy", []*Route{another, boy, chooses, division, elephant, frogs}, boy, "boy", false},
-//		{"boys", []*Route{another, boy, chooses}, boy, "boy", false},
-//	}
-//	for _, test := range tests {
-//		route := &Route{"route", test.children, nil}
-//		child, prefix := route.findOrCreateChildWithCommonPrefix(test.path)
-//		passed := prefix == test.prefix && child != nil && (test.created || child == test.child)
-//		if !passed {
-//			t.Errorf("route.findOrCreateChildWithCommonPrefix(%q) = %v, %q want %v, %q (%v)",
-//				test.path, child, prefix, test.child, test.prefix, test.created)
-//		}
-//		if test.created {
-//			index, _ := route.indexOfCommonPrefixChild(test.path)
-//			if route.children[index] != child {
-//				t.Errorf("route.findOrCreateChildWithCommonPrefix() did not appropriately create child")
-//			}
-//		}
-//	}
-//}
-
 func TestRoute_findChildWithCommonPrefix(t *testing.T) {
 	tests := []struct {
 		path     string
