@@ -20,6 +20,54 @@ func newRoute(path string, children ...*Route) *Route {
 	}
 }
 
+func (route *Route) Delete(handler http.Handler) *Route {
+	return route.Handle(handler)
+}
+
+func (route *Route) DeleteFunc(handlerFunc http.HandlerFunc) *Route {
+	return route.HandleFunc(handlerFunc)
+}
+
+func (route *Route) Get(handler http.Handler) *Route {
+	return route.Handle(handler)
+}
+
+func (route *Route) GetFunc(handlerFunc http.HandlerFunc) *Route {
+	return route.HandleFunc(handlerFunc)
+}
+
+func (route *Route) Head(handler http.Handler) *Route {
+	return route.Handle(handler)
+}
+
+func (route *Route) HeadFunc(handlerFunc http.HandlerFunc) *Route {
+	return route.HandleFunc(handlerFunc)
+}
+
+func (route *Route) Options(handler http.Handler) *Route {
+	return route.Handle(handler)
+}
+
+func (route *Route) OptionsFunc(handlerFunc http.HandlerFunc) *Route {
+	return route.HandleFunc(handlerFunc)
+}
+
+func (route *Route) Post(handler http.Handler) *Route {
+	return route.Handle(handler)
+}
+
+func (route *Route) PostFunc(handlerFunc http.HandlerFunc) *Route {
+	return route.HandleFunc(handlerFunc)
+}
+
+func (route *Route) Put(handler http.Handler) *Route {
+	return route.Handle(handler)
+}
+
+func (route *Route) PutFunc(handlerFunc http.HandlerFunc) *Route {
+	return route.HandleFunc(handlerFunc)
+}
+
 func (route *Route) SubRoute(path string) *Route {
 	return route.insertSubRoute(path)
 }

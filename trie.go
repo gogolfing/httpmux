@@ -1,9 +1,6 @@
 package mux
 
-import (
-	"errors"
-	"net/http"
-)
+import "net/http"
 
 type trie struct {
 	root *Route
@@ -29,5 +26,5 @@ func (t *trie) getHandler(r *http.Request, path string) (http.Handler, error) {
 	if len(remainingPath) == 0 {
 		return found.getHandler(r)
 	}
-	return nil, errors.New("something having to do with bad paths")
+	return nil, ErrNotFound
 }

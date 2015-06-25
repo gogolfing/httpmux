@@ -2,10 +2,6 @@ package path
 
 import pathlib "path"
 
-const (
-	Root = "/"
-)
-
 func Clean(path string) string {
 	if path == "" {
 		return "/"
