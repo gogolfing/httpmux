@@ -70,7 +70,25 @@ func TestRoute_insertSubRoute_splitChild(t *testing.T) {
 	}
 }
 
-func TestRoute_getHandler(t *testing.T) {
+func TestRoute_getHandler_routeHandleNil(t *testing.T) {
+	route := newRoute("")
+	handler, err := route.getHandler(nil)
+	if handler != nil || err != ErrNotFound {
+		t.Fail()
+	}
+}
+
+func TestRoute_getHandler_useRouteHandler(t *testing.T) {
+	handler := intHandler(0)
+	route := newRoute("")
+	route.routeHandler = &routeHandler{
+		handler,
+		nil,
+	}
+	h, err := route.getHandler(nil)
+	if h != handler || err != nil {
+		t.Fail()
+	}
 }
 
 func TestRoute_insertLeaf(t *testing.T) {

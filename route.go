@@ -1,7 +1,6 @@
 package mux
 
 import (
-	"fmt"
 	"net/http"
 
 	muxpath "github.com/gogolfing/mux/path"
@@ -23,6 +22,18 @@ func newRoute(path string, children ...*Route) *Route {
 
 func (route *Route) SubRoute(path string) *Route {
 	return route.insertSubRoute(path)
+}
+
+func (route *Route) HandleFunc(handlerFunc http.HandlerFunc, methods ...string) *Route {
+	return route.Handle(http.HandlerFunc(handlerFunc), methods...)
+}
+
+func (route *Route) Handle(handler http.Handler, methods ...string) *Route {
+	if route.routeHandler == nil {
+		route.routeHandler = &routeHandler{}
+	}
+	route.routeHandler.handle(handler, methods...)
+	return route
 }
 
 func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
@@ -113,6 +124,6 @@ func (route *Route) insertChildAtIndex(child *Route, index int) {
 	route.children = append(route.children, after...)
 }
 
-func (route *Route) String() string {
-	return fmt.Sprintf("&Route{%s}", route.path)
+func (route *Route) Methods() []string {
+	return route.routeHandler.methods()
 }

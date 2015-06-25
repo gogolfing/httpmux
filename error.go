@@ -16,8 +16,12 @@ var (
 
 type ErrStatusHandler int
 
+func (h ErrStatusHandler) Error() string {
+	return http.StatusText(int(h))
+}
+
 func (h ErrStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ServeErrorStatus(w, int(h))
+	serveErrorStatus(w, int(h))
 }
 
 type ErrMethodNotAllowed struct {
@@ -28,15 +32,15 @@ func (_ *ErrMethodNotAllowed) Error() string {
 	return http.StatusText(http.StatusMethodNotAllowed)
 }
 
-func (e *ErrMethodNotAllowed) header() string {
+func (e *ErrMethodNotAllowed) Header() string {
 	return strings.Join(e.methods, ", ")
 }
 
 func (e *ErrMethodNotAllowed) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add(HeaderAllow, e.header())
-	ServeErrorStatus(w, http.StatusMethodNotAllowed)
+	w.Header().Add(HeaderAllow, e.Header())
+	serveErrorStatus(w, http.StatusMethodNotAllowed)
 }
 
-func ServeErrorStatus(w http.ResponseWriter, status int) {
+func serveErrorStatus(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
