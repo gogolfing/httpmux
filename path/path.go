@@ -3,17 +3,22 @@ package path
 import pathlib "path"
 
 func Clean(path string) string {
-	if len(path) == 0 {
-		return "/"
-	}
-	if path[0] != '/' {
-		path = "/" + path
-	}
+	path = EnsureRootSlash(path)
 	newPath := pathlib.Clean(path)
 	if path[len(path)-1] == '/' && newPath != "/" {
 		newPath += "/"
 	}
 	return newPath
+}
+
+func EnsureRootSlash(path string) string {
+	if len(path) == 0 {
+		return "/"
+	}
+	if path[0] != '/' {
+		return "/" + path
+	}
+	return path
 }
 
 func CommonPrefix(a, b string) string {

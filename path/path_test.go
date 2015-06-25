@@ -35,6 +35,24 @@ func TestClean(t *testing.T) {
 	}
 }
 
+func TestEnsureRootSlash(t *testing.T) {
+	tests := []struct {
+		path   string
+		result string
+	}{
+		{"", "/"},
+		{"/", "/"},
+		{"/hello", "/hello"},
+		{"hello/", "/hello/"},
+	}
+	for _, test := range tests {
+		result := EnsureRootSlash(test.path)
+		if result != test.result {
+			t.Errorf("EnsureRootSlash(%q) = %q want %q", test.path, result, test.result)
+		}
+	}
+}
+
 func TestCommonPrefix(t *testing.T) {
 	tests := []struct {
 		a      string

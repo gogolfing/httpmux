@@ -29,21 +29,11 @@ func (m *Mux) HandleFunc(path string, handlerFunc http.HandlerFunc, methods ...s
 }
 
 func (m *Mux) Handle(path string, handler http.Handler, methods ...string) *Route {
-	return m.trie.handle(m.ensureRootSlash(path), handler, methods...)
+	return m.trie.handle(muxpath.EnsureRootSlash(path), handler, methods...)
 }
 
 func (m *Mux) SubRoute(path string) *Route {
-	return m.trie.subRoute(m.ensureRootSlash(path))
-}
-
-func (m *Mux) ensureRootSlash(path string) string {
-	if len(path) == 0 {
-		return "/"
-	}
-	if path[0] != '/' {
-		return "/" + path
-	}
-	return path
+	return m.trie.subRoute(muxpath.EnsureRootSlash(path))
 }
 
 func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
