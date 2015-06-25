@@ -30,7 +30,7 @@ func TestRouteHandler_getHandler(t *testing.T) {
 		{nil, []string{"GET"}, nil, "GET", nil, nil},
 		{nil, []string{"GET"}, zero, "GET", zero, nil},
 		{zero, []string{"GET"}, nil, "PUT", zero, nil},
-		{nil, []string{"GET", "POST"}, zero, "PUT", nil, &ErrMethodNotAllowed{[]string{"GET"}}},
+		{nil, []string{"GET", "POST"}, zero, "PUT", nil, ErrMethodNotAllowed([]string{"GET"})},
 	}
 	for _, test := range tests {
 		rh := &routeHandler{
@@ -44,9 +44,9 @@ func TestRouteHandler_getHandler(t *testing.T) {
 			t.Errorf("%v.getHandler(%v) = %v, %v want %v, %v", rh, r.Method, result, err, test.result, test.err)
 		}
 		if err != nil {
-			errMethod, ok := err.(*ErrMethodNotAllowed)
+			errMethod, ok := err.(ErrMethodNotAllowed)
 			if !ok {
-				if !reflect.DeepEqual(*errMethod, ErrMethodNotAllowed{rh.methods()}) {
+				if !reflect.DeepEqual(errMethod, ErrMethodNotAllowed(rh.methods())) {
 					t.Fail()
 				}
 			}

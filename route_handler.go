@@ -20,9 +20,7 @@ func (rh *routeHandler) getHandler(r *http.Request) (http.Handler, error) {
 	if rh.handler != nil {
 		return rh.handler, nil
 	}
-	return nil, &ErrMethodNotAllowed{
-		rh.methods(),
-	}
+	return nil, ErrMethodNotAllowed(rh.methods())
 }
 
 func (rh *routeHandler) handleFunc(hf http.HandlerFunc, methods ...string) {

@@ -24,19 +24,17 @@ func (h ErrStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	serveErrorStatus(w, int(h))
 }
 
-type ErrMethodNotAllowed struct {
-	methods []string
-}
+type ErrMethodNotAllowed []string
 
-func (_ *ErrMethodNotAllowed) Error() string {
+func (_ ErrMethodNotAllowed) Error() string {
 	return http.StatusText(http.StatusMethodNotAllowed)
 }
 
-func (e *ErrMethodNotAllowed) Header() string {
-	return strings.Join(e.methods, ", ")
+func (e ErrMethodNotAllowed) Header() string {
+	return strings.Join(e, ", ")
 }
 
-func (e *ErrMethodNotAllowed) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (e ErrMethodNotAllowed) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add(HeaderAllow, e.Header())
 	serveErrorStatus(w, http.StatusMethodNotAllowed)
 }
