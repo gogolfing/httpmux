@@ -36,22 +36,6 @@ func (route *Route) GetFunc(handlerFunc http.HandlerFunc) *Route {
 	return route.HandleFunc(handlerFunc)
 }
 
-func (route *Route) Head(handler http.Handler) *Route {
-	return route.Handle(handler)
-}
-
-func (route *Route) HeadFunc(handlerFunc http.HandlerFunc) *Route {
-	return route.HandleFunc(handlerFunc)
-}
-
-func (route *Route) Options(handler http.Handler) *Route {
-	return route.Handle(handler)
-}
-
-func (route *Route) OptionsFunc(handlerFunc http.HandlerFunc) *Route {
-	return route.HandleFunc(handlerFunc)
-}
-
 func (route *Route) Post(handler http.Handler) *Route {
 	return route.Handle(handler)
 }
