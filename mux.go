@@ -37,6 +37,9 @@ func (m *Mux) SubRoute(path string) *Route {
 }
 
 func (m *Mux) ensureRootSlash(path string) string {
+	if len(path) == 0 {
+		return "/"
+	}
 	if path[0] != '/' {
 		return "/" + path
 	}

@@ -3,7 +3,7 @@ package path
 import pathlib "path"
 
 func Clean(path string) string {
-	if path == "" {
+	if len(path) == 0 {
 		return "/"
 	}
 	if path[0] != '/' {
@@ -14,10 +14,6 @@ func Clean(path string) string {
 		newPath += "/"
 	}
 	return newPath
-}
-
-func IsEmpty(path string) bool {
-	return path == ""
 }
 
 func CommonPrefix(a, b string) string {

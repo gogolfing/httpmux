@@ -35,23 +35,6 @@ func TestClean(t *testing.T) {
 	}
 }
 
-func TestIsEmpty(t *testing.T) {
-	tests := []struct {
-		path   string
-		result bool
-	}{
-		{"", true},
-		{"hello, world", false},
-		{"gogolfing/mux", false},
-	}
-	for _, test := range tests {
-		isEmpty := IsEmpty(test.path)
-		if isEmpty != test.result {
-			t.Errorf("IsEmpty(%q) = %v want %v", test.path, isEmpty, test.result)
-		}
-	}
-}
-
 func TestCommonPrefix(t *testing.T) {
 	tests := []struct {
 		a      string
