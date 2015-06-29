@@ -126,6 +126,35 @@ func TestRoute_insertChildPath(t *testing.T) {
 }
 
 func TestRoute_splitChild(t *testing.T) {
+	tests := []struct {
+		childPaths    []string
+		path          string
+		index         int
+		oldChildPath  string
+		newChildPath  string
+		remainingPath string
+	}{
+		{[]string{"hello"}, "he", 0, "llo", "he", ""},
+		{[]string{"another", "boy", "chooses"}, "bodacious", 1, "y", "bo", "dacious"},
+		{[]string{"another", "bodacious", "chooses"}, "boy", 1, "dacious", "bo", "y"},
+	}
+	for _, test := range tests {
+		children := make([]*Route, 0, len(test.childPaths))
+		for _, path := range test.childPaths {
+			children = append(children, newRoute(path))
+		}
+		root := newRoute("", children...)
+		oldChild := root.children[test.index]
+		result, remainingPath := root.splitChild(test.path)
+		if result != root.children[test.index] ||
+			remainingPath != test.remainingPath ||
+			len(result.children) != 1 ||
+			result.children[0] != oldChild ||
+			result.children[0].path != test.oldChildPath ||
+			result.path != test.newChildPath {
+			t.Fail()
+		}
+	}
 }
 
 func TestRoute_findSubRoute(t *testing.T) {
