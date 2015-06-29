@@ -81,23 +81,26 @@ func (route *Route) insertSubRoute(path string) *Route {
 		return found
 	}
 	if found == nil {
-		return parent.insertLeaf(remainingPath)
+		return parent.insertChildPath(remainingPath)
 	}
-	return parent.insertSplitChild(remainingPath)
+	found, remainingPath = parent.splitChild(remainingPath)
+	return found.insertChildPath(remainingPath)
 }
 
-func (route *Route) insertLeaf(path string) *Route {
-	child := newRoute(path)
-	route.insertChildAtIndex(child, 0)
-	return child
+func (route *Route) insertChildPath(path string) *Route {
+	if len(path) == 0 {
+		return route
+	}
+	index, _ := route.indexOfCommonPrefixChild(path)
+	return route.insertChildAtIndex(newRoute(path), ^index)
 }
 
-func (route *Route) insertSplitChild(path string) *Route {
-	oldChild, index, _ := route.findChildWithCommonPrefix(path)
-	newChild := newRoute(path, oldChild)
+func (route *Route) splitChild(path string) (*Route, string) {
+	oldChild, index, prefix := route.findChildWithCommonPrefix(path)
+	newChild := newRoute(prefix, oldChild)
 	route.children[index] = newChild
-	oldChild.path = oldChild.path[len(path):]
-	return newChild
+	oldChild.path = oldChild.path[len(prefix):]
+	return newChild, path[len(prefix):]
 }
 
 func (route *Route) findSubRoute(path string) (*Route, *Route, string) {
@@ -140,13 +143,13 @@ func (route *Route) indexOfCommonPrefixChild(path string) (int, string) {
 	return ^high, ""
 }
 
-func (route *Route) insertChildAtIndex(child *Route, index int) {
+func (route *Route) insertChildAtIndex(child *Route, index int) *Route {
 	if index < 0 || index > len(route.children) {
-		return
+		return nil
 	}
 	if route.children == nil {
 		route.children = []*Route{child}
-		return
+		return child
 	}
 	before := route.children[:index]
 	after := route.children[index:]
@@ -154,6 +157,7 @@ func (route *Route) insertChildAtIndex(child *Route, index int) {
 	route.children = append(route.children, before...)
 	route.children = append(route.children, child)
 	route.children = append(route.children, after...)
+	return child
 }
 
 func (route *Route) Methods() []string {

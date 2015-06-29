@@ -13,7 +13,7 @@ func newTrie() *trie {
 }
 
 func (t *trie) handle(path string, handler http.Handler, methods ...string) *Route {
-	return t.root.insertSubRoute(path).Handle(handler, methods...)
+	return t.root.SubRoute(path).Handle(handler, methods...)
 }
 
 func (t *trie) subRoute(path string) *Route {
@@ -21,10 +21,12 @@ func (t *trie) subRoute(path string) *Route {
 }
 
 func (t *trie) getHandler(r *http.Request, path string) (http.Handler, error) {
-	//will likely need paent here for error handling.
-	_, found, remainingPath := t.root.findSubRoute(path)
+	parent, found, remainingPath := t.root.findSubRoute(path)
 	if len(remainingPath) == 0 {
+		if found == nil {
+			return nil, ErrNotFound
+		}
 		return found.getHandler(r)
 	}
-	return nil, ErrNotFound
+	return parent.getHandler(r)
 }

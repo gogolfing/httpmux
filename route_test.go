@@ -1,9 +1,6 @@
 package mux
 
-import (
-	"reflect"
-	"testing"
-)
+import "testing"
 
 var (
 	empty    = newRoute("")
@@ -39,37 +36,6 @@ func TestNewRoute(t *testing.T) {
 	}
 }
 
-func TestRoute_insertSubRoute_exists(t *testing.T) {
-	root := newRoute("",
-		newRoute("hello"),
-	)
-	result := root.SubRoute("hello")
-	if result != root.children[0] {
-		t.Fail()
-	}
-}
-
-func TestRoute_insertSubRoute_leaf(t *testing.T) {
-	root := newRoute("",
-		newRoute("another"),
-		newRoute("hello"),
-	)
-	result := root.SubRoute("hello, world")
-	if result.path != ", world" || result != root.children[1].children[0] {
-		t.Fail()
-	}
-}
-
-func TestRoute_insertSubRoute_splitChild(t *testing.T) {
-	root := newRoute("",
-		newRoute("hello"),
-	)
-	result := root.SubRoute("he")
-	if result.path != "he" || len(root.children) != 1 || result != root.children[0] {
-		t.Fail()
-	}
-}
-
 func TestRoute_getHandler_routeHandleNil(t *testing.T) {
 	route := newRoute("")
 	handler, err := route.getHandler(nil)
@@ -91,69 +57,75 @@ func TestRoute_getHandler_useRouteHandler(t *testing.T) {
 	}
 }
 
-func TestRoute_insertLeaf(t *testing.T) {
-	const helloString = "hello"
-	root := newRoute("")
-	result := root.insertLeaf(helloString)
-	if result.path != helloString || len(root.children) != 1 || root.children[0] != result {
-		t.Errorf("%v.insertLeaf(%q) = %q, %v want %q, %v",
-			root, helloString, result.path, root.children, helloString, []*Route{newRoute(helloString)})
+func TestRoute_insertSubRoute_exists(t *testing.T) {
+	root := newRoute("",
+		newRoute("hello"),
+	)
+	result := root.SubRoute("hello")
+	if result != root.children[0] {
+		t.Fail()
 	}
 }
 
-func TestRoute_insertSplitChild(t *testing.T) {
+func TestRoute_insertSubRoute_leaf(t *testing.T) {
+	root := newRoute("",
+		newRoute("another"),
+		newRoute("hello"),
+	)
+	result := root.SubRoute("hello, world")
+	if result.path != ", world" || result != root.children[1].children[0] {
+		t.Fail()
+	}
+}
+
+func TestRoute_insertSubRoute_splitChild_noRemaining(t *testing.T) {
+	root := newRoute("",
+		newRoute("hello"),
+	)
+	result := root.SubRoute("he")
+	if result.path != "he" || len(root.children) != 1 || result != root.children[0] {
+		t.Fail()
+	}
+}
+
+func TestRoute_insertSubRoute_splitChild_remaining(t *testing.T) {
+	root := newRoute("",
+		newRoute("hello"),
+	)
+	result := root.SubRoute("hey")
+	if result.path != "y" || len(root.children) != 1 || result != root.children[0].children[1] {
+		t.Error(result, root.children[0])
+		t.Fail()
+	}
+}
+
+func TestRoute_insertChildPath(t *testing.T) {
 	tests := []struct {
-		root    *Route
-		oldPath string
-		newPath string
+		root  *Route
+		path  string
+		index int
 	}{
-		{
-			newRoute("",
-				newRoute("hello"),
-			),
-			"hello",
-			"he",
-		},
-		{
-			newRoute("",
-				newRoute("another"),
-				newRoute("baseball"),
-				newRoute("car"),
-				newRoute("diamond"),
-				newRoute("hello"),
-				newRoute("world"),
-			),
-			"hello",
-			"hell",
-		},
+		{newRoute(""), "", -1},
+		{newRoute("", newRoute("hello")), "", -1},
+		{newRoute(""), "hello", 0},
+		{newRoute("", newRoute("hello")), "another", 0},
+		{newRoute("", newRoute("hello")), "paper", 1},
 	}
 	for _, test := range tests {
-		expectedNumberChildren := len(test.root.children)
-		_, expectedOldRoute, remainingPath := test.root.findSubRoute(test.oldPath)
-		_, expectedIndex, _ := test.root.findChildWithCommonPrefix(test.oldPath)
-		if expectedOldRoute == nil || len(remainingPath) > 0 {
-			t.Errorf("route.findSubRoute(%q) = %v, %q is incorrect", test.oldPath, expectedOldRoute, remainingPath)
-		}
-		expectedOldRoute.routeHandler = &routeHandler{}
-		expectedNewRoute := test.root.insertSplitChild(test.newPath)
-
-		_, oldRoute, remaingPath := test.root.findSubRoute(test.oldPath)
-		if oldRoute != expectedOldRoute || len(remaingPath) > 0 || !reflect.DeepEqual(oldRoute, expectedOldRoute) {
-			t.Errorf("route.insertSplitChild(%q) oldRoute = %v want %v", test.oldPath, oldRoute, expectedOldRoute)
-		}
-		_, newRoute, remaingPath := test.root.findSubRoute(test.newPath)
-		if newRoute != expectedNewRoute || newRoute.path != test.newPath || len(remainingPath) > 0 {
-			t.Errorf("route.insertSplitChild(%q) newRoute = %v want %v", test.newPath, newRoute, expectedNewRoute)
-		}
-		_, index, _ := test.root.findChildWithCommonPrefix(test.newPath)
-		if index != expectedIndex {
-			t.Errorf("route.insertSplitChild(%q) index = %v want %v", test.newPath, index, expectedIndex)
-		}
-		numberChildren := len(test.root.children)
-		if expectedNumberChildren != numberChildren {
-			t.Errorf("route.insertSplitChild(%q) number of children = %v want %v", test.newPath, numberChildren, expectedNumberChildren)
+		result := test.root.insertChildPath(test.path)
+		if test.index == -1 {
+			if result != test.root {
+				t.Error("*Route.insertChildPath(%q) = %v want root", test.path, result)
+			}
+		} else {
+			if result != test.root.children[test.index] {
+				t.Fail()
+			}
 		}
 	}
+}
+
+func TestRoute_splitChild(t *testing.T) {
 }
 
 func TestRoute_findSubRoute(t *testing.T) {
@@ -167,6 +139,7 @@ func TestRoute_findSubRoute(t *testing.T) {
 	root = newRoute("", helloRoute)
 	testRoute_findSubRoute(t, root, "", root, nil, "")
 	testRoute_findSubRoute(t, root, "he", root, helloRoute, "he")
+	testRoute_findSubRoute(t, root, "hey", root, helloRoute, "hey")
 	testRoute_findSubRoute(t, root, "hello", root, helloRoute, "")
 	testRoute_findSubRoute(t, root, "hello, world", helloRoute, nil, ", world")
 	testRoute_findSubRoute(t, root, "another", root, nil, "another")
@@ -178,9 +151,11 @@ func TestRoute_findSubRoute(t *testing.T) {
 	testRoute_findSubRoute(t, root, "", root, nil, "")
 	testRoute_findSubRoute(t, root, "he", root, helloRoute, "he")
 	testRoute_findSubRoute(t, root, "hello", root, helloRoute, "")
+	testRoute_findSubRoute(t, root, "hey", root, helloRoute, "hey")
 	testRoute_findSubRoute(t, root, "hello, world", helloRoute, worldRoute, "")
 	testRoute_findSubRoute(t, root, "another", root, nil, "another")
 	testRoute_findSubRoute(t, root, "hello, wo", helloRoute, worldRoute, ", wo")
+	testRoute_findSubRoute(t, root, "hello, wonderful", helloRoute, worldRoute, ", wonderful")
 	testRoute_findSubRoute(t, root, "hello, world, again", worldRoute, nil, ", again")
 }
 
@@ -339,32 +314,32 @@ func TestRoute_insertChildAtIndex(t *testing.T) {
 	two := newRoute("two")
 	three := newRoute("three")
 	tests := []struct {
-		children []*Route
-		insert   *Route
-		index    int
-		result   []*Route
+		children       []*Route
+		insert         *Route
+		index          int
+		resultChildren []*Route
+		resultReturn   *Route
 	}{
-		{nil, one, -1, nil},
-		{nil, one, 2, nil},
-		{[]*Route{}, one, 2, []*Route{}},
-		{[]*Route{one}, two, 4, []*Route{one}},
-		{nil, one, 0, []*Route{one}},
-		{[]*Route{}, one, 0, []*Route{one}},
-		{[]*Route{one}, two, 0, []*Route{two, one}},
-		{[]*Route{one}, two, 1, []*Route{one, two}},
-		{[]*Route{one, two}, three, 0, []*Route{three, one, two}},
-		{[]*Route{one, two}, three, 1, []*Route{one, three, two}},
-		{[]*Route{one, two}, three, 2, []*Route{one, two, three}},
+		{nil, one, -1, nil, nil},
+		{nil, one, 2, nil, nil},
+		{[]*Route{}, one, 2, []*Route{}, nil},
+		{[]*Route{one}, two, 4, []*Route{one}, nil},
+		{nil, one, 0, []*Route{one}, one},
+		{[]*Route{}, one, 0, []*Route{one}, one},
+		{[]*Route{one}, two, 0, []*Route{two, one}, two},
+		{[]*Route{one}, two, 1, []*Route{one, two}, two},
+		{[]*Route{one, two}, three, 0, []*Route{three, one, two}, three},
+		{[]*Route{one, two}, three, 1, []*Route{one, three, two}, three},
+		{[]*Route{one, two}, three, 2, []*Route{one, two, three}, three},
 		//these should not occur during normal use, but still testing.
-		{[]*Route{one, two}, nil, 1, []*Route{one, nil, two}},
-		{[]*Route{one, two}, two, 1, []*Route{one, two, two}},
+		{[]*Route{one, two}, nil, 1, []*Route{one, nil, two}, nil},
+		{[]*Route{one, two}, two, 1, []*Route{one, two, two}, two},
 	}
 	for _, test := range tests {
 		route := &Route{"route", test.children, nil}
-		route.insertChildAtIndex(test.insert, test.index)
-		equals := areRoutesEqual(route.children, test.result)
-		if !equals {
-			t.Errorf("%v insertChildAtIndex(%v, %v) = %v want %v", test.children, test.insert, test.index, route.children, test.result)
+		result := route.insertChildAtIndex(test.insert, test.index)
+		if !areRoutesEqual(route.children, test.resultChildren) || result != test.resultReturn {
+			t.Errorf("%v insertChildAtIndex(%v, %v) = %v want %v", test.children, test.insert, test.index, route.children, test.resultChildren)
 		}
 	}
 }
