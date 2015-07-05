@@ -9,7 +9,11 @@ before_install:
   - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
 
 script:
-  - $HOME/gopath/bin/goveralls -v -repotoken $COVERALLS_TOKEN
+  - go test -covermode count -v -coverprofile profile.cov .
+  - go test -covermode count -v -coverprofile profile.errors.cov ./errors
+  - go test -covermode count -v -coverprofile profile.path.cov ./path
+  - $HOME/gopath/bin/gocov convert *.cov > gocov.out
+  - $HOME/gopath/bin/goveralls -coverprofile gocov.out -repotoken $COVERALLS_TOKEN
 
 notifications:
   email:
