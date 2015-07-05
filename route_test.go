@@ -3,6 +3,7 @@ package mux
 import (
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	errors "github.com/gogolfing/mux/errors"
@@ -40,6 +41,54 @@ func TestNewRoute(t *testing.T) {
 			t.Fail()
 		}
 	}
+}
+
+func TestRoute_methodHandlers(t *testing.T) {
+	zero := intHandler(0)
+	one := intHandler(1)
+	two := intHandler(2)
+	three := intHandler(3)
+	four := intHandler(4)
+
+	root := newRoute("")
+	root.Delete(zero)
+	root.Get(one)
+	root.Post(two)
+	root.Put(three)
+	root.Handle(four, "PATCH")
+
+	tests := []struct {
+		method  string
+		handler http.Handler
+	}{
+		{"DELETE", zero},
+		{"GET", one},
+		{"POST", two},
+		{"PUT", three},
+		{"PATCH", four},
+	}
+	for _, test := range tests {
+		r, _ := http.NewRequest(test.method, "localhost", nil)
+		handler, err := root.getHandler(r)
+		if handler != test.handler || err != nil {
+			t.Errorf("*Route.getHandler(%q) = %v, %v want %v, %v", test.method, handler, err, test.handler, nil)
+		}
+	}
+}
+
+func TestRoute_methodHandlerFuncs(t *testing.T) {
+	root := newRoute("")
+	root.DeleteFunc(intHandler(0).ServeHTTP)
+	root.GetFunc(intHandler(1).ServeHTTP)
+	root.PostFunc(intHandler(2).ServeHTTP)
+	root.PutFunc(intHandler(3).ServeHTTP)
+	root.HandleFunc(intHandler(4).ServeHTTP, "PATCH")
+
+	testRouteResponse(t, root, "DELETE", 200, "0")
+	testRouteResponse(t, root, "GET", 200, "1")
+	testRouteResponse(t, root, "POST", 200, "2")
+	testRouteResponse(t, root, "PUT", 200, "3")
+	testRouteResponse(t, root, "PATCH", 200, "4")
 }
 
 func TestRoute_HandleFunc(t *testing.T) {
@@ -334,6 +383,15 @@ func TestRoute_insertChildAtIndex(t *testing.T) {
 		if !areRoutesEqual(route.children, test.resultChildren) || result != test.resultReturn {
 			t.Errorf("%v insertChildAtIndex(%v, %v) = %v want %v", test.children, test.insert, test.index, route.children, test.resultChildren)
 		}
+	}
+}
+
+func TestRoute_Methods(t *testing.T) {
+	root := newRoute("")
+	root.Handle(nil, "PUT", "GET")
+	methods := root.Methods()
+	if !reflect.DeepEqual(methods, []string{"GET", "PUT"}) {
+		t.Fail()
 	}
 }
 
