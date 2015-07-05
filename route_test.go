@@ -1,6 +1,8 @@
 package mux
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	errors "github.com/gogolfing/mux/errors"
@@ -37,6 +39,43 @@ func TestNewRoute(t *testing.T) {
 		if !areRoutesEqual(route.children, test.children) {
 			t.Fail()
 		}
+	}
+}
+
+func TestRoute_HandleFunc(t *testing.T) {
+	root := newRoute("")
+	handler := intHandler(0)
+	result := root.HandleFunc(handler.ServeHTTP)
+	if result != root {
+		t.Fail()
+	}
+	testRouteResponse(t, root, "GET", 200, "0")
+}
+
+func TestRoute_Handle(t *testing.T) {
+	root := newRoute("")
+	handler := intHandler(0)
+	result := root.Handle(handler)
+	if result != root {
+		t.Fail()
+	}
+	r, _ := http.NewRequest("GET", "localhost", nil)
+	resultHandler, err := root.getHandler(r)
+	if resultHandler != handler || err != nil {
+		t.Fail()
+	}
+}
+
+func testRouteResponse(t *testing.T, route *Route, method string, code int, response string) {
+	r, _ := http.NewRequest(method, "localhost", nil)
+	handler, err := route.getHandler(r)
+	if err != nil {
+		t.Fail()
+	}
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, r)
+	if w.Code != code || w.Body.String() != response {
+		t.Fail()
 	}
 }
 
