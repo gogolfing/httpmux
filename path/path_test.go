@@ -90,6 +90,8 @@ func TestCompareIgnorePrefix(t *testing.T) {
 		{"abd", "abc", 1, "ab"},
 		{"hello", "golfmux", 1, ""},
 		{"a", "e", -4, ""},
+		{"he", "hello", 0, "he"},
+		{"hello", "he", 0, "he"},
 	}
 	for _, test := range tests {
 		comparison, prefix := CompareIgnorePrefix(test.a, test.b)
