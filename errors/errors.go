@@ -1,4 +1,4 @@
-package mux
+package errors
 
 import (
 	"net/http"
