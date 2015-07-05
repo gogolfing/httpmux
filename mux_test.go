@@ -1,22 +1,31 @@
 package mux
 
 import (
-	"errors"
+	errorslib "errors"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
 )
 
-func TestMux(t *testing.T) {
+func TestMux_serveError(t *testing.T) {
 	m := New()
-	m.Handle("/", intHandler(0))
-	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/", nil)
-	m.ServeHTTP(w, r)
-	t.Log(w.Code, w.Body.String())
-	if w.Body.String() != "0" {
-		t.Fail()
+	tests := []struct {
+		err      error
+		code     int
+		response string
+	}{
+		{ErrNotFound, http.StatusNotFound, http.StatusText(http.StatusNotFound) + "\n"},
+		{errorslib.New("unknown error type"), 200, ""}, //not semantically correct but is result of empty response.
+	}
+	for _, test := range tests {
+		w := httptest.NewRecorder()
+		r, _ := http.NewRequest("GET", "localhost", nil)
+		m.serveError(w, r, test.err)
+		response := w.Body.String()
+		if w.Code != test.code || response != test.response {
+			t.Errorf("*Mux.serveError(_, _, %v) = %v, %q want %v, %q", test.err, w.Code, response, test.code, test.response)
+		}
 	}
 }
 
@@ -56,7 +65,7 @@ func TestMux_getErrorHandler_notFound(t *testing.T) {
 
 func TestMux_getErrorHandler_nil(t *testing.T) {
 	m := New()
-	err := errors.New("unknown error type")
+	err := errorslib.New("unknown error type")
 	handler := m.getErrorHandler(err)
 	if handler != nil {
 		t.Fail()
