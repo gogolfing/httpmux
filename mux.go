@@ -56,17 +56,17 @@ func (m *Mux) serveError(w http.ResponseWriter, r *http.Request, err error) {
 }
 
 func (m *Mux) getErrorHandler(err error) http.Handler {
-	if methodError, ok := err.(*ErrMethodNotAllowed); ok {
+	if handler, ok := err.(ErrMethodNotAllowed); ok {
 		if m.MethodNotAllowedHandler != nil {
 			return m.MethodNotAllowedHandler
 		}
-		return methodError
+		return handler
 	}
 	if err == ErrNotFound {
 		if m.NotFoundHandler != nil {
 			return m.NotFoundHandler
 		}
-		return ErrStatusHandler(http.StatusNotFound)
+		return ErrNotFound
 	}
 	return nil
 }

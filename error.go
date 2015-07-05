@@ -1,17 +1,13 @@
 package mux
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 )
 
 const (
-	HeaderAllow = "Allow"
-)
-
-var (
-	ErrNotFound = errors.New(http.StatusText(http.StatusNotFound))
+	headerAllow = "Allow"
+	ErrNotFound = ErrStatusHandler(http.StatusNotFound)
 )
 
 type ErrStatusHandler int
@@ -35,7 +31,7 @@ func (e ErrMethodNotAllowed) Header() string {
 }
 
 func (e ErrMethodNotAllowed) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add(HeaderAllow, e.Header())
+	w.Header().Add(headerAllow, e.Header())
 	serveErrorStatus(w, http.StatusMethodNotAllowed)
 }
 
