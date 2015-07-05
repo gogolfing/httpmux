@@ -12,8 +12,8 @@ script:
   - go test -covermode count -v -coverprofile profile.cov .
   - go test -covermode count -v -coverprofile profile.errors.cov ./errors
   - go test -covermode count -v -coverprofile profile.path.cov ./path
-  - $HOME/gopath/bin/gocov convert *.cov > gocov.out
-  - $HOME/gopath/bin/goveralls -coverprofile gocov.out -repotoken $COVERALLS_TOKEN
+  - $HOME/gopath/bin/gocov convert *.cov > profile.cov.json
+  - $HOME/gopath/bin/goveralls -gocovdata profile.cov.json -repotoken $COVERALLS_TOKEN -service travis-ci
 
 notifications:
   email:
