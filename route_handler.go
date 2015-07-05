@@ -3,6 +3,8 @@ package mux
 import (
 	"net/http"
 	"sort"
+
+	errors "github.com/gogolfing/mux/errors"
 )
 
 type routeHandler struct {
@@ -20,7 +22,7 @@ func (rh *routeHandler) getHandler(r *http.Request) (http.Handler, error) {
 	if rh.handler != nil {
 		return rh.handler, nil
 	}
-	return nil, ErrMethodNotAllowed(rh.methods())
+	return nil, errors.ErrMethodNotAllowed(rh.methods())
 }
 
 func (rh *routeHandler) handleFunc(hf http.HandlerFunc, methods ...string) {

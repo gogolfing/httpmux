@@ -1,6 +1,10 @@
 package mux
 
-import "testing"
+import (
+	"testing"
+
+	errors "github.com/gogolfing/mux/errors"
+)
 
 var (
 	empty    = newRoute("")
@@ -39,7 +43,7 @@ func TestNewRoute(t *testing.T) {
 func TestRoute_getHandler_routeHandleNil(t *testing.T) {
 	route := newRoute("")
 	handler, err := route.getHandler(nil)
-	if handler != nil || err != ErrNotFound {
+	if handler != nil || err != errors.ErrNotFound {
 		t.Fail()
 	}
 }

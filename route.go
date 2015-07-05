@@ -3,6 +3,7 @@ package mux
 import (
 	"net/http"
 
+	errors "github.com/gogolfing/mux/errors"
 	muxpath "github.com/gogolfing/mux/path"
 )
 
@@ -70,7 +71,7 @@ func (route *Route) Handle(handler http.Handler, methods ...string) *Route {
 
 func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
 	if route.routeHandler == nil {
-		return nil, ErrNotFound
+		return nil, errors.ErrNotFound
 	}
 	return route.routeHandler.getHandler(r)
 }

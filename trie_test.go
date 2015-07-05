@@ -3,6 +3,8 @@ package mux
 import (
 	"net/http"
 	"testing"
+
+	errors "github.com/gogolfing/mux/errors"
 )
 
 func TestNewTrie(t *testing.T) {
@@ -19,15 +21,15 @@ func TestTrie_getHandler(t *testing.T) {
 		handler http.Handler
 		err     error
 	}{
-		{nil, "", nil, ErrNotFound},
-		{[]string{"hello"}, "", nil, ErrNotFound},
-		{nil, "hello", nil, ErrNotFound},
+		{nil, "", nil, errors.ErrNotFound},
+		{[]string{"hello"}, "", nil, errors.ErrNotFound},
+		{nil, "hello", nil, errors.ErrNotFound},
 		{[]string{"hello"}, "hello", intHandler(0), nil},
-		{[]string{"hello"}, "something", nil, ErrNotFound},
-		{[]string{"hello"}, "he", nil, ErrNotFound},
+		{[]string{"hello"}, "something", nil, errors.ErrNotFound},
+		{[]string{"hello"}, "he", nil, errors.ErrNotFound},
 		{[]string{"hello"}, "hello, world", intHandler(0), nil},
 		{[]string{"romane", "romanus", "romulus", "rubens", "ruber", "rubicon", "rubicundus"}, "ruber", intHandler(4), nil},
-		{[]string{"romane", "romanus", "romulus", "rubens", "ruber", "rubicon", "rubicundus"}, "rom", nil, ErrNotFound},
+		{[]string{"romane", "romanus", "romulus", "rubens", "ruber", "rubicon", "rubicundus"}, "rom", nil, errors.ErrNotFound},
 	}
 	for _, test := range tests {
 		trie := newTrie()

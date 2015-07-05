@@ -3,6 +3,7 @@ package mux
 import (
 	"net/http"
 
+	errors "github.com/gogolfing/mux/errors"
 	muxpath "github.com/gogolfing/mux/path"
 )
 
@@ -56,17 +57,17 @@ func (m *Mux) serveError(w http.ResponseWriter, r *http.Request, err error) {
 }
 
 func (m *Mux) getErrorHandler(err error) http.Handler {
-	if handler, ok := err.(ErrMethodNotAllowed); ok {
+	if handler, ok := err.(errors.ErrMethodNotAllowed); ok {
 		if m.MethodNotAllowedHandler != nil {
 			return m.MethodNotAllowedHandler
 		}
 		return handler
 	}
-	if err == ErrNotFound {
+	if err == errors.ErrNotFound {
 		if m.NotFoundHandler != nil {
 			return m.NotFoundHandler
 		}
-		return ErrNotFound
+		return errors.ErrNotFound
 	}
 	return nil
 }

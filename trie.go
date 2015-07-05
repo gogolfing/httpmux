@@ -1,6 +1,10 @@
 package mux
 
-import "net/http"
+import (
+	"net/http"
+
+	errors "github.com/gogolfing/mux/errors"
+)
 
 type trie struct {
 	root *Route
@@ -24,7 +28,7 @@ func (t *trie) getHandler(r *http.Request, path string) (http.Handler, error) {
 	parent, found, remainingPath := t.root.findSubRoute(path)
 	if len(remainingPath) == 0 {
 		if found == nil {
-			return nil, ErrNotFound
+			return nil, errors.ErrNotFound
 		}
 		return found.getHandler(r)
 	}

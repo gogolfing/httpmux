@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	errors "github.com/gogolfing/mux/errors"
 )
 
 func TestMux_serveError(t *testing.T) {
@@ -15,7 +17,7 @@ func TestMux_serveError(t *testing.T) {
 		code     int
 		response string
 	}{
-		{ErrNotFound, http.StatusNotFound, http.StatusText(http.StatusNotFound) + "\n"},
+		{errors.ErrNotFound, http.StatusNotFound, http.StatusText(http.StatusNotFound) + "\n"},
 		{errorslib.New("unknown error type"), 200, ""}, //not semantically correct but is result of empty response.
 	}
 	for _, test := range tests {
@@ -31,7 +33,7 @@ func TestMux_serveError(t *testing.T) {
 
 func TestMux_getErrorHandler_methodNotAllowed(t *testing.T) {
 	m := New()
-	err := ErrMethodNotAllowed([]string{"GET"})
+	err := errors.ErrMethodNotAllowed([]string{"GET"})
 
 	handler := m.getErrorHandler(err)
 	if reflect.DeepEqual(handler, []string{"GET"}) {
@@ -48,7 +50,7 @@ func TestMux_getErrorHandler_methodNotAllowed(t *testing.T) {
 
 func TestMux_getErrorHandler_notFound(t *testing.T) {
 	m := New()
-	err := ErrNotFound
+	err := errors.ErrNotFound
 
 	handler := m.getErrorHandler(err)
 	if handler != err {
