@@ -10,6 +10,30 @@ import (
 	errors "github.com/gogolfing/mux/errors"
 )
 
+const (
+	ResponseNotFound = "Not Found\n"
+)
+
+var (
+	ErrUnknown = errorslib.New("unknown error type")
+)
+
+func TestNew(t *testing.T) {
+	m := New()
+	if m.NotFoundHandler != nil || m.MethodNotAllowedHandler != nil {
+		t.Fail()
+	}
+}
+
+func TestNewHandlers(t *testing.T) {
+	notFound := intHandler(0)
+	methodNotAllowed := intHandler(1)
+	m := NewHandlers(notFound, methodNotAllowed)
+	if m.NotFoundHandler != notFound || m.MethodNotAllowedHandler != methodNotAllowed {
+		t.Fail()
+	}
+}
+
 func TestMux_serveError(t *testing.T) {
 	m := New()
 	tests := []struct {
@@ -17,8 +41,8 @@ func TestMux_serveError(t *testing.T) {
 		code     int
 		response string
 	}{
-		{errors.ErrNotFound, http.StatusNotFound, http.StatusText(http.StatusNotFound) + "\n"},
-		{errorslib.New("unknown error type"), 200, ""}, //not semantically correct but is result of empty response.
+		{errors.ErrNotFound, http.StatusNotFound, ResponseNotFound},
+		{ErrUnknown, 200, ""}, //not semantically correct but is result of empty response.
 	}
 	for _, test := range tests {
 		w := httptest.NewRecorder()
@@ -67,7 +91,7 @@ func TestMux_getErrorHandler_notFound(t *testing.T) {
 
 func TestMux_getErrorHandler_nil(t *testing.T) {
 	m := New()
-	err := errorslib.New("unknown error type")
+	err := ErrUnknown
 	handler := m.getErrorHandler(err)
 	if handler != nil {
 		t.Fail()
