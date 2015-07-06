@@ -19,37 +19,43 @@ func (h intHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func TestRouteHandler_getHandler(t *testing.T) {
 	zero := intHandler(0)
 	tests := []struct {
-		handler       http.Handler
-		methods       []string
-		methodHandler http.Handler
-		method        string
-		result        http.Handler
-		err           error
+		handler        http.Handler
+		methods        []string
+		methodsHandler http.Handler
+		method         string
+		result         http.Handler
+		err            error
 	}{
-		{nil, nil, nil, "GET", nil, nil},
+		{nil, nil, nil, "GET", nil, errors.ErrNotFound},
 		{zero, nil, zero, "GET", zero, nil},
-		{zero, nil, nil, "GET", nil, nil},
+		{zero, nil, nil, "GET", nil, errors.ErrNotFound}, //this overwrites rh.handler.
 		{nil, []string{"GET"}, nil, "GET", nil, nil},
 		{nil, []string{"GET"}, zero, "GET", zero, nil},
 		{zero, []string{"GET"}, nil, "PUT", zero, nil},
-		{nil, []string{"GET", "POST"}, zero, "PUT", nil, errors.ErrMethodNotAllowed([]string{"GET"})},
+		{nil, []string{"GET", "POST"}, zero, "PUT", nil, errors.ErrMethodNotAllowed([]string{"GET", "POST"})},
 	}
 	for _, test := range tests {
 		rh := &routeHandler{
 			test.handler,
 			nil,
 		}
-		rh.handle(test.methodHandler, test.methods...)
+		rh.handle(test.methodsHandler, test.methods...)
 		r, _ := http.NewRequest(test.method, "localhost", nil)
 		result, err := rh.getHandler(r)
 		if result != test.result {
-			t.Errorf("%v.getHandler(%v) = %v, %v want %v, %v", rh, r.Method, result, err, test.result, test.err)
+			t.Errorf("%v.getHandler(%q) = %v, %v want %v, %v", rh, r.Method, result, err, test.result, test.err)
 		}
 		if err != nil {
-			errMethod, ok := err.(errors.ErrMethodNotAllowed)
-			if !ok {
-				if !reflect.DeepEqual(errMethod, errors.ErrMethodNotAllowed(rh.methods())) {
-					t.Fail()
+			errMethods, ok := err.(errors.ErrMethodNotAllowed)
+			if ok {
+				actual := []string(errMethods)
+				expected := []string(test.err.(errors.ErrMethodNotAllowed))
+				if !reflect.DeepEqual(actual, expected) {
+					t.Errorf("%v.getHandler(%q) ErrMethodNotAllowed methods = %v want %v", rh, r.Method, actual, expected)
+				}
+			} else {
+				if err != test.err {
+					t.Errorf("%v.getHandler(%q) err = %v want %v", rh, r.Method, err, test.err)
 				}
 			}
 		}

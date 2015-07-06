@@ -14,7 +14,10 @@ type routeHandler struct {
 
 func (rh *routeHandler) getHandler(r *http.Request) (http.Handler, error) {
 	if len(rh.methodHandlers) == 0 {
-		return rh.handler, nil
+		if rh.handler != nil {
+			return rh.handler, nil
+		}
+		return nil, errors.ErrNotFound
 	}
 	if h, ok := rh.methodHandlers[r.Method]; ok {
 		return h, nil

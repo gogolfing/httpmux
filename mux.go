@@ -1,6 +1,7 @@
 package mux
 
 import (
+	"fmt"
 	"net/http"
 
 	errors "github.com/gogolfing/mux/errors"
@@ -9,8 +10,8 @@ import (
 
 type Mux struct {
 	trie                    *trie
-	NotFoundHandler         http.Handler
 	MethodNotAllowedHandler http.Handler
+	NotFoundHandler         http.Handler
 }
 
 func New() *Mux {
@@ -46,7 +47,9 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if handler != nil {
 		handler.ServeHTTP(w, r)
+		return
 	}
+	fmt.Println("handler is nil", *r)
 }
 
 func (m *Mux) serveError(w http.ResponseWriter, r *http.Request, err error) {
