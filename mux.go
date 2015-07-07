@@ -1,7 +1,6 @@
 package mux
 
 import (
-	"fmt"
 	"net/http"
 
 	errors "github.com/gogolfing/mux/errors"
@@ -49,7 +48,6 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		handler.ServeHTTP(w, r)
 		return
 	}
-	fmt.Println("handler is nil", *r)
 }
 
 func (m *Mux) serveError(w http.ResponseWriter, r *http.Request, err error) {
