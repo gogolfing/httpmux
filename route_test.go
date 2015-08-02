@@ -1,4 +1,4 @@
-package mux
+package httpmux
 
 import (
 	"net/http"
@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	errors "github.com/gogolfing/mux/errors"
+	errors "github.com/gogolfing/httpmux/errors"
 )
 
 var (

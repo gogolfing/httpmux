@@ -1,4 +1,4 @@
-package mux
+package httpmux
 
 import (
 	errorslib "errors"
@@ -8,8 +8,8 @@ import (
 	"reflect"
 	"testing"
 
-	errors "github.com/gogolfing/mux/errors"
-	muxpath "github.com/gogolfing/mux/path"
+	errors "github.com/gogolfing/httpmux/errors"
+	muxpath "github.com/gogolfing/httpmux/path"
 )
 
 const (

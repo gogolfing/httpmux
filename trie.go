@@ -1,9 +1,9 @@
-package mux
+package httpmux
 
 import (
 	"net/http"
 
-	errors "github.com/gogolfing/mux/errors"
+	errors "github.com/gogolfing/httpmux/errors"
 )
 
 type trie struct {

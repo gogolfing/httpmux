@@ -1,10 +1,10 @@
-package mux
+package httpmux
 
 import (
 	"net/http"
 	"testing"
 
-	errors "github.com/gogolfing/mux/errors"
+	errors "github.com/gogolfing/httpmux/errors"
 )
 
 func TestNewTrie(t *testing.T) {

@@ -1,4 +1,4 @@
-package mux
+package httpmux
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	errors "github.com/gogolfing/mux/errors"
+	errors "github.com/gogolfing/httpmux/errors"
 )
 
 type intHandler int
