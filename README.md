@@ -1,6 +1,6 @@
 # httpmux
-An HTTP router for the http package that supports methods, sub routes, and route
-parameters.
+Provides a router for the http package that supports method handling, sub routes,
+and route parameters.
 
 ## Documentation and Examples
 Full documentation and examples can be found at [![GoDoc](https://godoc.org/github.com/gogolfing/httpmux?status.svg)](https://godoc.org/github.com/gogolfing/httpmux)
