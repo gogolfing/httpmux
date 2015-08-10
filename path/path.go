@@ -1,6 +1,51 @@
 package path
 
-import pathlib "path"
+import (
+	pathlib "path"
+	"regexp"
+)
+
+var varRegexp *regexp.Regexp
+
+func init() {
+	varRegexp = regexp.MustCompile(`\{\*?[A-Za-z]+\}`)
+}
+
+func SplitPathVars(path string) []string {
+	indices := FindAllVarSubmatchIndex(path)
+	if len(indices) == 0 {
+		return []string{path}
+	}
+	result := []string{}
+	last := []int{-1, 0}
+	for _, v := range indices {
+		result = append(result, path[last[1]:v[0]])
+		result = append(result, path[v[0]:v[1]])
+		last = v
+	}
+	result = append(result, path[last[1]:])
+	if len(result[0]) == 0 {
+		result = result[1:]
+	}
+	if len(result[len(result)-1]) == 0 {
+		result = result[:len(result)-1]
+	}
+	return result
+}
+
+func IsEndVariable(path string) bool {
+	return IsVariable(path) && path[1] == '*'
+}
+
+func IsVariable(path string) bool {
+	indices := FindAllVarSubmatchIndex(path)
+	return len(indices) == 1 && indices[0][0] == 0 && indices[0][1] == len(path)
+}
+
+func FindAllVarSubmatchIndex(path string) [][]int {
+	indices := varRegexp.FindAllStringSubmatchIndex(path, -1)
+	return indices
+}
 
 func Clean(path string) string {
 	path = EnsureRootSlash(path)
