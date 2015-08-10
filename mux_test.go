@@ -127,7 +127,7 @@ func testMux_ServeHTTP(t *testing.T, m *Mux, tests []serveHTTPTest) {
 		m.ServeHTTP(w, r)
 		response := w.Body.String()
 		if w.Code != test.code || response != test.response {
-			t.Errorf("*Mux.ServeHTTP( %q, %q ) = %v, %q want %v, %q", test.method, test.path, w.Code, response, test.code, test.response)
+			t.Errorf("*Mux.ServeHTTP(%q, %q) = %v, %q want %v, %q", test.method, test.path, w.Code, response, test.code, test.response)
 		}
 	}
 }

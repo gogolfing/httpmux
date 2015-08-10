@@ -1,6 +1,7 @@
 package httpmux
 
 import (
+	"fmt"
 	"net/http"
 
 	errors "github.com/gogolfing/httpmux/errors"
@@ -54,7 +55,12 @@ func (route *Route) PutFunc(handlerFunc http.HandlerFunc) *Route {
 }
 
 func (route *Route) SubRoute(path string) *Route {
-	return route.insertSubRoute(path)
+	result, err := route.insertSubRoute(path)
+	if err != nil {
+		panic(err)
+		return nil
+	}
+	return result
 }
 
 func (route *Route) HandleFunc(handlerFunc http.HandlerFunc, methods ...string) *Route {
@@ -76,7 +82,36 @@ func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
 	return route.routeHandler.getHandler(r)
 }
 
-func (route *Route) insertSubRoute(path string) *Route {
+func (route *Route) insertSubRoute(path string) (*Route, error) {
+	if len(path) == 0 {
+		return route, nil
+	}
+	splitPath := muxpath.SplitPathVars(path)
+	i := 0
+	part := splitPath[i]
+	isVariable := muxpath.IsVariable(part)
+	result := route
+	var err error = nil
+	for {
+		if len(part) == 0 {
+			return nil, fmt.Errorf("path %q cannot have two immediately consecutive variables", path)
+		}
+		if isVariable {
+			result = route.insertSubRoutePath(part)
+		} else {
+			result, err = route.insertChildVariable(part)
+		}
+		i++
+		if i >= len(splitPath) {
+			break
+		}
+		part = splitPath[i]
+		isVariable = !isVariable
+	}
+	return result, err
+}
+
+func (route *Route) insertSubRoutePath(path string) *Route {
 	parent, found, remainingPath := route.findSubRoute(path)
 	if len(remainingPath) == 0 {
 		return found
@@ -102,6 +137,10 @@ func (route *Route) splitChild(path string) (*Route, string) {
 	route.children[index] = newChild
 	oldChild.path = oldChild.path[len(prefix):]
 	return newChild, path[len(prefix):]
+}
+
+func (route *Route) insertChildVariable(variable string) (*Route, error) {
+	return route, nil
 }
 
 func (route *Route) findSubRoute(path string) (*Route, *Route, string) {

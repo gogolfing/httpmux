@@ -149,42 +149,58 @@ func TestRoute_getHandler_useRouteHandler(t *testing.T) {
 	}
 }
 
-func TestRoute_insertSubRoute_exists(t *testing.T) {
+func TestRoute_insertSubRoute_noVars(t *testing.T) {
+	root := newRoute("", newRoute("hello"))
+	result, err := root.insertSubRoute("another")
+	if err != nil || result == nil || result.path != "another" || root.children[0] != result {
+		t.Fail()
+	}
+}
+
+func TestRoute_insertSubRoute_consecutiveVars(t *testing.T) {
+	root := newRoute("")
+	result, err := root.insertSubRoute("{one}{two}")
+	if err == nil || err.Error() != `path "{one}{two}" cannot have two immediately consecutive variables` || result != nil {
+		t.Fail()
+	}
+}
+
+func TestRoute_insertSubRoutePath_exists(t *testing.T) {
 	root := newRoute("",
 		newRoute("hello"),
 	)
-	result := root.SubRoute("hello")
+	result := root.insertSubRoutePath("hello")
 	if result != root.children[0] {
 		t.Fail()
 	}
 }
 
-func TestRoute_insertSubRoute_leaf(t *testing.T) {
+func TestRoute_insertSubRoutePath_leaf(t *testing.T) {
 	root := newRoute("",
 		newRoute("another"),
 		newRoute("hello"),
 	)
-	result := root.SubRoute("hello, world")
+	result := root.insertSubRoutePath("hello, world")
 	if result.path != ", world" || result != root.children[1].children[0] {
 		t.Fail()
 	}
 }
 
-func TestRoute_insertSubRoute_splitChild_noRemaining(t *testing.T) {
+func TestRoute_insertSubRoutePath_splitChild_noRemaining(t *testing.T) {
 	root := newRoute("",
 		newRoute("hello"),
 	)
-	result := root.SubRoute("he")
+	result := root.insertSubRoutePath("he")
 	if result.path != "he" || len(root.children) != 1 || result != root.children[0] {
 		t.Fail()
 	}
 }
 
-func TestRoute_insertSubRoute_splitChild_remaining(t *testing.T) {
+func TestRoute_insertSubRoutePath_splitChild_remaining(t *testing.T) {
 	root := newRoute("",
 		newRoute("hello"),
 	)
-	result := root.SubRoute("hey")
+	result := root.insertSubRoutePath("hey")
 	if result.path != "y" || len(root.children) != 1 || result != root.children[0].children[1] {
 		t.Error(result, root.children[0])
 		t.Fail()

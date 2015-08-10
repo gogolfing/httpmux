@@ -10,6 +10,7 @@ func TestSplitPathVars(t *testing.T) {
 		path   string
 		result []string
 	}{
+		{"", []string{""}},
 		{"something", []string{"something"}},
 		{"{hello}", []string{"{hello}"}},
 		{"some{var}thing", []string{"some", "{var}", "thing"}},
