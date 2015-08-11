@@ -99,9 +99,9 @@ func (route *Route) insertSubRoute(path string) (*Route, error) {
 			return nil, fmt.Errorf("path %q cannot have two immediately consecutive variables", path)
 		}
 		if isVariable {
-			result = route.insertSubRoutePath(part)
-		} else {
 			result, err = route.insertChildVariable(part)
+		} else {
+			result = route.insertSubRoutePath(part)
 		}
 		i++
 		if i >= len(splitPath) {
