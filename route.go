@@ -8,15 +8,37 @@ import (
 	muxpath "github.com/gogolfing/httpmux/path"
 )
 
+type pathType uint8
+
+const (
+	pathTypeStatic pathType = iota
+	pathTypePartVariable
+	pathTypeEndVariable
+)
+
+func (pt pathType) isVariable() bool {
+	return pt.isPartVariable() || pt.IsEndVariable()
+}
+
+func (pt pathType) isPartVariable() bool {
+	return pt == pathTypePartVariable
+}
+
+func (pt pathType) IsEndVariable() bool {
+	return pt == pathTypeEndVariable
+}
+
 type Route struct {
 	path         string
+	pathType     pathType
 	children     []*Route
 	routeHandler *routeHandler
 }
 
-func newRoute(path string, children ...*Route) *Route {
+func newRoute(path string, pt pathType, children ...*Route) *Route {
 	return &Route{
 		path,
+		pt,
 		children,
 		nil,
 	}
@@ -55,12 +77,7 @@ func (route *Route) PutFunc(handlerFunc http.HandlerFunc) *Route {
 }
 
 func (route *Route) SubRoute(path string) *Route {
-	result, err := route.insertSubRoute(path)
-	if err != nil {
-		panic(err)
-		return nil
-	}
-	return result
+	return route
 }
 
 func (route *Route) HandleFunc(handlerFunc http.HandlerFunc, methods ...string) *Route {
@@ -86,86 +103,78 @@ func (route *Route) insertSubRoute(path string) (*Route, error) {
 	if len(path) == 0 {
 		return route, nil
 	}
-	splitPath := muxpath.SplitPathVars(path)
-	fmt.Println("insertSubRoute()", splitPath)
-	i := 0
-	part := splitPath[i]
-	isVariable := muxpath.IsVariable(part)
-	result := route
-	var err error = nil
-	for {
-		fmt.Println(i, part, isVariable)
-		if len(part) == 0 {
-			return nil, fmt.Errorf("path %q cannot have two immediately consecutive variables", path)
-		}
-		if isVariable {
-			result, err = route.insertChildVariable(part)
-		} else {
-			result = route.insertSubRoutePath(part)
-		}
-		i++
-		if i >= len(splitPath) {
-			break
-		}
-		part = splitPath[i]
-		isVariable = !isVariable
-	}
-	return result, err
+	return nil, nil
 }
 
-func (route *Route) insertSubRoutePath(path string) *Route {
-	parent, found, remainingPath := route.findSubRoute(path)
-	if len(remainingPath) == 0 {
-		return found
-	}
-	if found == nil {
-		return parent.insertChildPath(remainingPath)
-	}
-	found, remainingPath = parent.splitChild(remainingPath)
-	return found.insertChildPath(remainingPath)
-}
-
-func (route *Route) insertChildPath(path string) *Route {
+func (route *Route) insertStaticSubRoute(path string) (*Route, error) {
 	if len(path) == 0 {
-		return route
+		return route, nil
 	}
-	index, _ := route.indexOfCommonPrefixChild(path)
-	return route.insertChildAtIndex(newRoute(path), ^index)
+	if route.pathType.IsEndVariable() {
+		return nil, fmt.Errorf(
+			"cannot have any path after an end variable: %v %v",
+			route.path,
+			path,
+		)
+	}
+	if route.hasVariableChild() {
+		return nil, fmt.Errorf(
+			"cannot have static path: %v at same location as variable: %v",
+			path,
+			route.variableChildPath(),
+		)
+	}
+	//TODO old way of doing it. add static path as a sub route.
+	return nil, nil
 }
 
-func (route *Route) insertChildVariable(variable string) (*Route, error) {
-	return route, nil
-}
-
-func (route *Route) splitChild(path string) (*Route, string) {
-	oldChild, index, prefix := route.findChildWithCommonPrefix(path)
-	newChild := newRoute(prefix, oldChild)
-	route.children[index] = newChild
-	oldChild.path = oldChild.path[len(prefix):]
-	return newChild, path[len(prefix):]
-}
-
-func (route *Route) findSubRoute(path string) (*Route, *Route, string) {
-	parent := route
-	child, _, prefix := parent.findChildWithCommonPrefix(path)
-	for child != nil && len(path) > 0 && len(prefix) == len(child.path) {
-		path = path[len(prefix):]
-		if len(path) == 0 {
-			break
+func (route *Route) insertVariableSubRoute(path string) (*Route, error) {
+	if route.pathType.isVariable() {
+		return nil, fmt.Errorf(
+			"cannot have two immediately consecutive variables: %v, %v",
+			route.path,
+			path,
+		)
+	}
+	//must have static path type.
+	if route.hasVariableChild() {
+		if route.variableChildPath() == path {
+			return route.children[0], nil
 		}
-		parent = child
-		child, _, prefix = parent.findChildWithCommonPrefix(path)
+		return nil, fmt.Errorf(
+			"cannot have unequal variables at the same location: %v, %v",
+			route.variableChildPath(),
+			path,
+		)
 	}
-	return parent, child, path
+	//must have static children.
+	if len(route.children) > 0 {
+		return nil, fmt.Errorf(
+			"cannot have variable: %v at same location as static path: %v",
+			path,
+			"..."+route.path+"...",
+		)
+	}
+	//must have empty children.
+	child := newRoute(path, pathTypePartVariable)
+	return child, nil
 }
 
-func (route *Route) findChildWithCommonPrefix(path string) (*Route, int, string) {
-	index, prefix := route.indexOfCommonPrefixChild(path)
-	if index >= 0 {
-		return route.children[index], index, prefix
-	}
-	return nil, index, prefix
+func (route *Route) hasVariableChild() bool {
+	return len(route.children) == 1 && route.children[0].pathType.isVariable()
 }
+
+func (route *Route) variableChildPath() string {
+	return route.children[0].path
+}
+
+//func (route *Route) isVariable() bool {
+//	return route.pathType == pathTypePartVariable || route.pathType == pathTypeEndVariable
+//}
+//
+//func (route *Route) isEndVariable() bool {
+//	return route.pathType == pathTypeEndVariable
+//}
 
 func (route *Route) indexOfCommonPrefixChild(path string) (int, string) {
 	low, high := 0, len(route.children)

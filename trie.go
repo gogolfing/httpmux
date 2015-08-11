@@ -3,7 +3,7 @@ package httpmux
 import (
 	"net/http"
 
-	errors "github.com/gogolfing/httpmux/errors"
+	"github.com/gogolfing/httpmux/errors"
 )
 
 type trie struct {
@@ -12,7 +12,7 @@ type trie struct {
 
 func newTrie() *trie {
 	return &trie{
-		newRoute(""),
+		newRoute("", pathTypeStatic),
 	}
 }
 
@@ -25,12 +25,13 @@ func (t *trie) subRoute(path string) *Route {
 }
 
 func (t *trie) getHandler(r *http.Request, path string) (http.Handler, error) {
-	parent, found, remainingPath := t.root.findSubRoute(path)
-	if len(remainingPath) == 0 {
-		if found == nil {
-			return nil, errors.ErrNotFound
-		}
-		return found.getHandler(r)
-	}
-	return parent.getHandler(r)
+	return nil, errors.ErrNotFound
+	//	parent, found, remainingPath := t.root.findSubRoute(path)
+	//	if len(remainingPath) == 0 {
+	//		if found == nil {
+	//			return nil, errors.ErrNotFound
+	//		}
+	//		return found.getHandler(r)
+	//	}
+	//	return parent.getHandler(r)
 }
