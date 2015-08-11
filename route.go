@@ -133,16 +133,16 @@ func (route *Route) insertChildPath(path string) *Route {
 	return route.insertChildAtIndex(newRoute(path), ^index)
 }
 
+func (route *Route) insertChildVariable(variable string) (*Route, error) {
+	return route, nil
+}
+
 func (route *Route) splitChild(path string) (*Route, string) {
 	oldChild, index, prefix := route.findChildWithCommonPrefix(path)
 	newChild := newRoute(prefix, oldChild)
 	route.children[index] = newChild
 	oldChild.path = oldChild.path[len(prefix):]
 	return newChild, path[len(prefix):]
-}
-
-func (route *Route) insertChildVariable(variable string) (*Route, error) {
-	return route, nil
 }
 
 func (route *Route) findSubRoute(path string) (*Route, *Route, string) {
