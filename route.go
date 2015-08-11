@@ -87,12 +87,14 @@ func (route *Route) insertSubRoute(path string) (*Route, error) {
 		return route, nil
 	}
 	splitPath := muxpath.SplitPathVars(path)
+	fmt.Println("insertSubRoute()", splitPath)
 	i := 0
 	part := splitPath[i]
 	isVariable := muxpath.IsVariable(part)
 	result := route
 	var err error = nil
 	for {
+		fmt.Println(i, part, isVariable)
 		if len(part) == 0 {
 			return nil, fmt.Errorf("path %q cannot have two immediately consecutive variables", path)
 		}

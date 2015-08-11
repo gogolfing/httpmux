@@ -1,6 +1,7 @@
 package httpmux
 
 import (
+	"fmt"
 	"net/http"
 	"sort"
 
@@ -52,4 +53,8 @@ func (rh *routeHandler) methods() []string {
 	}
 	sort.Strings(result)
 	return result
+}
+
+func (rh *routeHandler) String() string {
+	return fmt.Sprintf("&%v", *rh)
 }

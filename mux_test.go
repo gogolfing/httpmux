@@ -53,6 +53,8 @@ func TestMux_HandleFunc(t *testing.T) {
 		{"POST", "/getonly", http.StatusMethodNotAllowed, ResponseMethodNotAllowed},
 		{"PATCH", "/patch", http.StatusOK, "3"},
 	}
+	t.Log("HandleFunc", m)
+	t.Log(m.Root().routeHandler)
 	testMux_ServeHTTP(t, m, tests)
 }
 
@@ -74,6 +76,7 @@ func TestMux_Handle(t *testing.T) {
 		{"PATCH", "/patch", http.StatusOK, "3"},
 		{"GET", "/nil", http.StatusNotFound, ResponseNotFound},
 	}
+	t.Log("Handle", m)
 	testMux_ServeHTTP(t, m, tests)
 }
 
@@ -100,6 +103,7 @@ func TestMux_SubRoute(t *testing.T) {
 		{"GET", "/sub/again/finally/more", http.StatusMethodNotAllowed, ResponseMethodNotAllowed},
 		{"GET", "/sub/again/else", http.StatusNotFound, ResponseNotFound},
 	}
+	t.Log("SubRoute", m)
 	testMux_ServeHTTP(t, m, tests)
 }
 
@@ -127,7 +131,7 @@ func testMux_ServeHTTP(t *testing.T, m *Mux, tests []serveHTTPTest) {
 		m.ServeHTTP(w, r)
 		response := w.Body.String()
 		if w.Code != test.code || response != test.response {
-			t.Errorf("*Mux.ServeHTTP(%q, %q) = %v, %q want %v, %q", test.method, test.path, w.Code, response, test.code, test.response)
+			t.Errorf("%v.ServeHTTP(%q, %q) = %v, %q want %v, %q", m, test.method, test.path, w.Code, response, test.code, test.response)
 		}
 	}
 }
