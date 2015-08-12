@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -37,4 +38,22 @@ func (e ErrMethodNotAllowed) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func serveErrorStatus(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
+}
+
+type ErrOverlapStaticVar struct {
+	StaticPath string
+	Variable   string
+}
+
+func (e *ErrOverlapStaticVar) Error() string {
+	return fmt.Sprintf("cannot have static path: %q and variable %q at the same location", e.StaticPath, e.Variable)
+}
+
+type ErrConsecutiveVars struct {
+	Variable1 string
+	Variable2 string
+}
+
+func (e *ErrConsecutiveVars) Error() string {
+	return fmt.Sprintf("cannot have two immediately consecutive variables: %q, %q", e.Variable1, e.Variable2)
 }

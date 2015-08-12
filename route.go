@@ -57,7 +57,8 @@ func (route *Route) PutFunc(handlerFunc http.HandlerFunc) *Route {
 }
 
 func (route *Route) SubRoute(path string) *Route {
-	return route
+	result, _ := route.insertSubRoute(path)
+	return result
 }
 
 func (route *Route) HandleFunc(handlerFunc http.HandlerFunc, methods ...string) *Route {
@@ -79,20 +80,37 @@ func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
 	return route.routeHandler.getHandler(r)
 }
 
+func (route *Route) search(path string) (*Route, *Route, string) {
+	return route.findStaticSubRoute(path)
+}
+
 func (route *Route) insertSubRoute(path string) (*Route, error) {
 	if len(path) == 0 {
 		return route, nil
 	}
-	return nil, nil
+	fmt.Printf("%v.insertSubRoute(%q)\n", route, path)
+	result := route
+	var err error = nil
+	parts := muxpath.SplitPathVars(path)
+	i, part, isVariable := 0, parts[0], muxpath.IsVariable(parts[0])
+	for i < len(parts) {
+		fmt.Println(part)
+		if isVariable {
+			result, err = result.insertVariableSubRoute(part)
+		} else {
+			result, err = result.insertStaticSubRoute(part)
+		}
+		if err != nil {
+			return nil, err
+		}
+		i, part, isVariable = i+1, parts[i], !isVariable
+	}
+	return result, nil
 }
 
 func (route *Route) insertVariableSubRoute(path string) (*Route, error) {
 	if route.isVariable() {
-		return nil, fmt.Errorf(
-			"cannot have two immediately consecutive variables: %v, %v",
-			route.path,
-			path,
-		)
+		return nil, &errors.ErrConsecutiveVars{route.path, path}
 	}
 	//must have static path type.
 	if route.hasVariableChild() {
@@ -148,18 +166,18 @@ func (route *Route) insertStaticSubRoute(path string) (*Route, error) {
 		)
 	}
 	if found == nil {
-		return parent.insertStaticChildPath(remainingPath)
+		return parent.insertStaticChildPath(remainingPath), nil
 	}
 	found, remainingPath = parent.splitStaticChild(remainingPath)
-	return found.insertStaticChildPath(remainingPath)
+	return found.insertStaticChildPath(remainingPath), nil
 }
 
-func (route *Route) insertStaticChildPath(path string) (*Route, error) {
+func (route *Route) insertStaticChildPath(path string) *Route {
 	if len(path) == 0 {
-		return route, nil
+		return route
 	}
 	index, _ := route.indexOfCommonPrefixChild(path)
-	return route.insertChildAtIndex(newRoute(path), ^index), nil
+	return route.insertChildAtIndex(newRoute(path), ^index)
 }
 
 func (route *Route) splitStaticChild(path string) (*Route, string) {

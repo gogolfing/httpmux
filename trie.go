@@ -25,13 +25,13 @@ func (t *trie) subRoute(path string) *Route {
 }
 
 func (t *trie) getHandler(r *http.Request, path string) (http.Handler, error) {
-	return nil, errors.ErrNotFound
-	//	parent, found, remainingPath := t.root.findSubRoute(path)
-	//	if len(remainingPath) == 0 {
-	//		if found == nil {
-	//			return nil, errors.ErrNotFound
-	//		}
-	//		return found.getHandler(r)
-	//	}
-	//	return parent.getHandler(r)
+	//return nil, errors.ErrNotFound
+	parent, found, remainingPath := t.root.search(path)
+	if len(remainingPath) == 0 {
+		if found == nil {
+			return nil, errors.ErrNotFound
+		}
+		return found.getHandler(r)
+	}
+	return parent.getHandler(r)
 }

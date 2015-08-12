@@ -149,59 +149,51 @@ func TestRoute_getHandler_useRouteHandler(t *testing.T) {
 	}
 }
 
-func TestRoute_insertSubRoute_noVars(t *testing.T) {
-	root := newRoute("", newRoute("hello"))
-	result, err := root.insertSubRoute("another")
-	if err != nil || result == nil || result.path != "another" || root.children[0] != result {
+func TestRoute_insertStaticSubRoute_empty(t *testing.T) {
+	root := newRoute("root")
+	result, err := root.insertStaticSubRoute("")
+	if result != root || err != nil {
 		t.Fail()
 	}
 }
 
-func TestRoute_insertSubRoute_consecutiveVars(t *testing.T) {
-	root := newRoute("")
-	result, err := root.insertSubRoute("{one}{two}")
-	if err == nil || err.Error() != `path "{one}{two}" cannot have two immediately consecutive variables` || result != nil {
-		t.Fail()
-	}
-}
-
-func TestRoute_insertSubRoutePath_exists(t *testing.T) {
+func TestRoute_insertStaticSubRoute_exists(t *testing.T) {
 	root := newRoute("",
 		newRoute("hello"),
 	)
-	result := root.insertSubRoutePath("hello")
-	if result != root.children[0] {
+	result, err := root.insertStaticSubRoute("hello")
+	if result != root.children[0] || err != nil {
 		t.Fail()
 	}
 }
 
-func TestRoute_insertSubRoutePath_leaf(t *testing.T) {
+func TestRoute_insertStaticSubRoute_leaf(t *testing.T) {
 	root := newRoute("",
 		newRoute("another"),
 		newRoute("hello"),
 	)
-	result := root.insertSubRoutePath("hello, world")
-	if result.path != ", world" || result != root.children[1].children[0] {
+	result, err := root.insertStaticSubRoute("hello, world")
+	if result.path != ", world" || result != root.children[1].children[0] || err != nil {
 		t.Fail()
 	}
 }
 
-func TestRoute_insertSubRoutePath_splitChild_noRemaining(t *testing.T) {
+func TestRoute_insertStaticSubRoute_splitChild_noRemaining(t *testing.T) {
 	root := newRoute("",
 		newRoute("hello"),
 	)
-	result := root.insertSubRoutePath("he")
-	if result.path != "he" || len(root.children) != 1 || result != root.children[0] {
+	result, err := root.insertStaticSubRoute("he")
+	if result.path != "he" || len(root.children) != 1 || result != root.children[0] || err != nil {
 		t.Fail()
 	}
 }
 
-func TestRoute_insertSubRoutePath_splitChild_remaining(t *testing.T) {
+func TestRoute_insertStaticSubRoute_splitChild_remaining(t *testing.T) {
 	root := newRoute("",
 		newRoute("hello"),
 	)
-	result := root.insertSubRoutePath("hey")
-	if result.path != "y" || len(root.children) != 1 || result != root.children[0].children[1] {
+	result, err := root.insertStaticSubRoute("hey")
+	if result.path != "y" || len(root.children) != 1 || result != root.children[0].children[1] || err != nil {
 		t.Error(result, root.children[0])
 		t.Fail()
 	}
@@ -220,7 +212,7 @@ func TestRoute_insertChildPath(t *testing.T) {
 		{newRoute("", newRoute("hello")), "paper", 1},
 	}
 	for _, test := range tests {
-		result := test.root.insertChildPath(test.path)
+		result := test.root.insertStaticChildPath(test.path)
 		if test.index == -1 {
 			if result != test.root {
 				t.Error("*Route.insertChildPath(%q) = %v want root", test.path, result)
@@ -233,7 +225,7 @@ func TestRoute_insertChildPath(t *testing.T) {
 	}
 }
 
-func TestRoute_splitChild(t *testing.T) {
+func TestRoute_splitStaticChild(t *testing.T) {
 	tests := []struct {
 		childPaths    []string
 		path          string
@@ -253,7 +245,7 @@ func TestRoute_splitChild(t *testing.T) {
 		}
 		root := newRoute("", children...)
 		oldChild := root.children[test.index]
-		result, remainingPath := root.splitChild(test.path)
+		result, remainingPath := root.splitStaticChild(test.path)
 		if result != root.children[test.index] ||
 			remainingPath != test.remainingPath ||
 			len(result.children) != 1 ||
@@ -265,46 +257,49 @@ func TestRoute_splitChild(t *testing.T) {
 	}
 }
 
-func TestRoute_findSubRoute(t *testing.T) {
+func TestRoute_findStaticSubRoute(t *testing.T) {
 	t.Log("root with no children")
 	root := newRoute("")
-	testRoute_findSubRoute(t, root, "", root, nil, "")
-	testRoute_findSubRoute(t, root, "hello", root, nil, "hello")
+	testRoute_findStaticSubRoute(t, root, "", root, nil, "")
+	testRoute_findStaticSubRoute(t, root, "hello", root, nil, "hello")
 
 	t.Log("root with single child")
 	helloRoute := newRoute("hello")
 	root = newRoute("", helloRoute)
-	testRoute_findSubRoute(t, root, "", root, nil, "")
-	testRoute_findSubRoute(t, root, "he", root, helloRoute, "he")
-	testRoute_findSubRoute(t, root, "hey", root, helloRoute, "hey")
-	testRoute_findSubRoute(t, root, "hello", root, helloRoute, "")
-	testRoute_findSubRoute(t, root, "hello, world", helloRoute, nil, ", world")
-	testRoute_findSubRoute(t, root, "another", root, nil, "another")
+	testRoute_findStaticSubRoute(t, root, "", root, nil, "")
+	testRoute_findStaticSubRoute(t, root, "he", root, helloRoute, "he")
+	testRoute_findStaticSubRoute(t, root, "hey", root, helloRoute, "hey")
+	testRoute_findStaticSubRoute(t, root, "hello", root, helloRoute, "")
+	testRoute_findStaticSubRoute(t, root, "hello, world", helloRoute, nil, ", world")
+	testRoute_findStaticSubRoute(t, root, "another", root, nil, "another")
 
 	t.Log("root with single child and single grandchild")
 	worldRoute := newRoute(", world")
 	helloRoute = newRoute("hello", worldRoute)
 	root = newRoute("", helloRoute)
-	testRoute_findSubRoute(t, root, "", root, nil, "")
-	testRoute_findSubRoute(t, root, "he", root, helloRoute, "he")
-	testRoute_findSubRoute(t, root, "hello", root, helloRoute, "")
-	testRoute_findSubRoute(t, root, "hey", root, helloRoute, "hey")
-	testRoute_findSubRoute(t, root, "hello, world", helloRoute, worldRoute, "")
-	testRoute_findSubRoute(t, root, "another", root, nil, "another")
-	testRoute_findSubRoute(t, root, "hello, wo", helloRoute, worldRoute, ", wo")
-	testRoute_findSubRoute(t, root, "hello, wonderful", helloRoute, worldRoute, ", wonderful")
-	testRoute_findSubRoute(t, root, "hello, world, again", worldRoute, nil, ", again")
+	testRoute_findStaticSubRoute(t, root, "", root, nil, "")
+	testRoute_findStaticSubRoute(t, root, "he", root, helloRoute, "he")
+	testRoute_findStaticSubRoute(t, root, "hello", root, helloRoute, "")
+	testRoute_findStaticSubRoute(t, root, "hey", root, helloRoute, "hey")
+	testRoute_findStaticSubRoute(t, root, "hello, world", helloRoute, worldRoute, "")
+	testRoute_findStaticSubRoute(t, root, "another", root, nil, "another")
+	testRoute_findStaticSubRoute(t, root, "hello, wo", helloRoute, worldRoute, ", wo")
+	testRoute_findStaticSubRoute(t, root, "hello, wonderful", helloRoute, worldRoute, ", wonderful")
+	testRoute_findStaticSubRoute(t, root, "hello, world, again", worldRoute, nil, ", again")
+
+	t.Log("root with variable sub routes")
+	//TODO implement this.
 }
 
-func testRoute_findSubRoute(t *testing.T, root *Route, path string, expectedParent, expectedFound *Route, expectedRemainingPath string) {
-	parent, found, remainingPath := root.findSubRoute(path)
+func testRoute_findStaticSubRoute(t *testing.T, root *Route, path string, expectedParent, expectedFound *Route, expectedRemainingPath string) {
+	parent, found, remainingPath := root.findStaticSubRoute(path)
 	if parent != expectedParent || found != expectedFound || remainingPath != expectedRemainingPath {
-		t.Errorf("%v.findSubRoute(%q) = %v, %v, %q want %v, %v, %q",
+		t.Errorf("%v.findStaticSubRoute(%q) = %v, %v, %q want %v, %v, %q",
 			root, path, parent, found, remainingPath, expectedParent, expectedFound, expectedRemainingPath)
 	}
 }
 
-func TestRoute_findChildWithCommonPrefix(t *testing.T) {
+func TestRoute_findStaticChildWithCommonPrefix(t *testing.T) {
 	tests := []struct {
 		path     string
 		children []*Route
@@ -325,12 +320,13 @@ func TestRoute_findChildWithCommonPrefix(t *testing.T) {
 		{"boy", []*Route{another, chooses, division, elephant}, nil, -2, ""},
 		{"boy", []*Route{another, boy, chooses, division, elephant, frogs}, boy, 1, "boy"},
 		{"boys", []*Route{another, boy, chooses}, boy, 1, "boy"},
+		//TODO add options with variable child.
 	}
 	for _, test := range tests {
 		route := newRoute("", test.children...)
-		child, index, prefix := route.findChildWithCommonPrefix(test.path)
+		child, index, prefix := route.findStaticChildWithCommonPrefix(test.path)
 		if child != test.child || index != test.index || prefix != test.prefix {
-			t.Errorf("route.findChildWithCommonPrefix(%q) = %v, %v, %q want %v, %v, %q",
+			t.Errorf("route.findStaticChildWithCommonPrefix(%q) = %v, %v, %q want %v, %v, %q",
 				test.path, child, index, prefix, test.child, test.index, test.prefix)
 		}
 	}
@@ -394,7 +390,7 @@ func TestRoute_insertChildAtIndex(t *testing.T) {
 		{[]*Route{one, two}, two, 1, []*Route{one, two, two}, two},
 	}
 	for _, test := range tests {
-		route := &Route{"route", test.children, nil}
+		route := newRoute("route", test.children...)
 		result := route.insertChildAtIndex(test.insert, test.index)
 		if !areRoutesEqual(route.children, test.resultChildren) || result != test.resultReturn {
 			t.Errorf("%v insertChildAtIndex(%v, %v) = %v want %v", test.children, test.insert, test.index, route.children, test.resultChildren)
