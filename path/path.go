@@ -5,6 +5,36 @@ import (
 	"regexp"
 )
 
+type PathType uint8
+
+const (
+	PathTypeStatic PathType = iota
+	PathTypePartVariable
+	PathTypeEndVariable
+)
+
+func TypeOf(path string) PathType {
+	if IsEndVariable(path) {
+		return PathTypeEndVariable
+	}
+	if IsVariable(path) {
+		return PathTypePartVariable
+	}
+	return PathTypeStatic
+}
+
+func (pt PathType) IsVariable() bool {
+	return pt.IsPartVariable() || pt.IsEndVariable()
+}
+
+func (pt PathType) IsPartVariable() bool {
+	return pt == PathTypePartVariable
+}
+
+func (pt PathType) IsEndVariable() bool {
+	return pt == PathTypeEndVariable
+}
+
 var varRegexp *regexp.Regexp
 
 func init() {

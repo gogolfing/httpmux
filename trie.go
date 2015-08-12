@@ -12,7 +12,7 @@ type trie struct {
 
 func newTrie() *trie {
 	return &trie{
-		newRoute("", pathTypeStatic),
+		newRoute(""),
 	}
 }
 
