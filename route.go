@@ -80,6 +80,11 @@ func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
 	return route.routeHandler.getHandler(r)
 }
 
+func (route *Route) ListRoutes() []string {
+	result := []string{}
+	return result
+}
+
 func (route *Route) search(path string) (*Route, *Route, string) {
 	return route.findStaticSubRoute(path)
 }

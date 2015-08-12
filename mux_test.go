@@ -37,25 +37,6 @@ func TestNewHandlers(t *testing.T) {
 	}
 }
 
-func TestMux_HandleFunc(t *testing.T) {
-	m := New()
-	m.HandleFunc("something", intHandler(0).ServeHTTP)
-	m.HandleFunc("/something/else", intHandler(1).ServeHTTP)
-	m.HandleFunc("/getonly", intHandler(2).ServeHTTP, "GET")
-	m.HandleFunc("/patch", intHandler(3).ServeHTTP, "PATCH")
-	tests := []serveHTTPTest{
-		{"GET", "/", http.StatusNotFound, ResponseNotFound},
-		{"GET", "/something", http.StatusOK, "0"},
-		{"POST", "/something", http.StatusOK, "0"},
-		{"GET", "/something/more", http.StatusOK, "0"},
-		{"GET", "/something/else", http.StatusOK, "1"},
-		{"GET", "/notfound", http.StatusNotFound, ResponseNotFound},
-		{"POST", "/getonly", http.StatusMethodNotAllowed, ResponseMethodNotAllowed},
-		{"PATCH", "/patch", http.StatusOK, "3"},
-	}
-	testMux_ServeHTTP(t, m, tests)
-}
-
 func TestMux_Handle(t *testing.T) {
 	m := New()
 	m.Handle("something", intHandler(0))
@@ -73,6 +54,25 @@ func TestMux_Handle(t *testing.T) {
 		{"POST", "/getonly", http.StatusMethodNotAllowed, ResponseMethodNotAllowed},
 		{"PATCH", "/patch", http.StatusOK, "3"},
 		{"GET", "/nil", http.StatusNotFound, ResponseNotFound},
+	}
+	testMux_ServeHTTP(t, m, tests)
+}
+
+func TestMux_HandleFunc(t *testing.T) {
+	m := New()
+	m.HandleFunc("something", intHandler(0).ServeHTTP)
+	m.HandleFunc("/something/else", intHandler(1).ServeHTTP)
+	m.HandleFunc("/getonly", intHandler(2).ServeHTTP, "GET")
+	m.HandleFunc("/patch", intHandler(3).ServeHTTP, "PATCH")
+	tests := []serveHTTPTest{
+		{"GET", "/", http.StatusNotFound, ResponseNotFound},
+		{"GET", "/something", http.StatusOK, "0"},
+		{"POST", "/something", http.StatusOK, "0"},
+		{"GET", "/something/more", http.StatusOK, "0"},
+		{"GET", "/something/else", http.StatusOK, "1"},
+		{"GET", "/notfound", http.StatusNotFound, ResponseNotFound},
+		{"POST", "/getonly", http.StatusMethodNotAllowed, ResponseMethodNotAllowed},
+		{"PATCH", "/patch", http.StatusOK, "3"},
 	}
 	testMux_ServeHTTP(t, m, tests)
 }
@@ -99,6 +99,15 @@ func TestMux_SubRoute(t *testing.T) {
 		{"POST", "/sub/again/finally/more", http.StatusOK, "4"},
 		{"GET", "/sub/again/finally/more", http.StatusMethodNotAllowed, ResponseMethodNotAllowed},
 		{"GET", "/sub/again/else", http.StatusNotFound, ResponseNotFound},
+	}
+	testMux_ServeHTTP(t, m, tests)
+}
+
+func TestMux_SubRoute_variable(t *testing.T) {
+	m := New()
+	m.SubRoute("/some/{var}/thing").Get(intHandler(0))
+	tests := []serveHTTPTest{
+		{"GET", "/sub", http.StatusNotFound, ResponseNotFound},
 	}
 	testMux_ServeHTTP(t, m, tests)
 }
