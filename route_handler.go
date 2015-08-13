@@ -55,6 +55,14 @@ func (rh *routeHandler) methods() []string {
 	return result
 }
 
+func (rh *routeHandler) methodsAll() []string {
+	result := rh.methods()
+	if rh.handler != nil {
+		result = append(result, "---")
+	}
+	return result
+}
+
 func (rh *routeHandler) String() string {
 	return fmt.Sprintf("&%v", *rh)
 }

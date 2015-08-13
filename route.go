@@ -57,7 +57,10 @@ func (route *Route) PutFunc(handlerFunc http.HandlerFunc) *Route {
 }
 
 func (route *Route) SubRoute(path string) *Route {
-	result, _ := route.insertSubRoute(path)
+	result, err := route.insertSubRoute(path)
+	if err != nil {
+		panic(err)
+	}
 	return result
 }
 
@@ -82,6 +85,27 @@ func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
 
 func (route *Route) ListRoutes() []string {
 	result := []string{}
+	methodsRoutes := route.listMethodsRoutes()
+	for _, v := range methodsRoutes {
+		result = append(result, v[0]+" "+v[1])
+	}
+	return result
+}
+
+func (route *Route) listMethodsRoutes() [][]string {
+	result := [][]string{}
+	if route.routeHandler != nil {
+		methodsAll := route.routeHandler.methodsAll()
+		for _, v := range methodsAll {
+			result = append(result, []string{v, route.path})
+		}
+	}
+	for _, child := range route.children {
+		methodsRoutes := child.listMethodsRoutes()
+		for _, v := range methodsRoutes {
+			result = append(result, []string{v[0], route.path + v[1]})
+		}
+	}
 	return result
 }
 
@@ -93,13 +117,11 @@ func (route *Route) insertSubRoute(path string) (*Route, error) {
 	if len(path) == 0 {
 		return route, nil
 	}
-	fmt.Printf("%v.insertSubRoute(%q)\n", route, path)
 	result := route
 	var err error = nil
 	parts := muxpath.SplitPathVars(path)
-	i, part, isVariable := 0, parts[0], muxpath.IsVariable(parts[0])
-	for i < len(parts) {
-		fmt.Println(part)
+	isVariable := muxpath.IsVariable(parts[0])
+	for _, part := range parts {
 		if isVariable {
 			result, err = result.insertVariableSubRoute(part)
 		} else {
@@ -108,7 +130,7 @@ func (route *Route) insertSubRoute(path string) (*Route, error) {
 		if err != nil {
 			return nil, err
 		}
-		i, part, isVariable = i+1, parts[i], !isVariable
+		isVariable = !isVariable
 	}
 	return result, nil
 }
@@ -137,8 +159,7 @@ func (route *Route) insertVariableSubRoute(path string) (*Route, error) {
 		)
 	}
 	//must have empty children.
-	child := newRoute(path)
-	return child, nil
+	return route.insertChildAtIndex(newRoute(path), 0), nil
 }
 
 func (route *Route) insertStaticSubRoute(path string) (*Route, error) {
@@ -270,5 +291,8 @@ func (route *Route) insertChildAtIndex(child *Route, index int) *Route {
 }
 
 func (route *Route) Methods() []string {
-	return route.routeHandler.methods()
+	if route.routeHandler != nil {
+		return route.routeHandler.methods()
+	}
+	return []string{}
 }

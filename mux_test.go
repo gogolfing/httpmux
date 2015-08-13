@@ -104,12 +104,6 @@ func TestMux_SubRoute(t *testing.T) {
 }
 
 func TestMux_SubRoute_variable(t *testing.T) {
-	m := New()
-	m.SubRoute("/some/{var}/thing").Get(intHandler(0))
-	tests := []serveHTTPTest{
-		{"GET", "/sub", http.StatusNotFound, ResponseNotFound},
-	}
-	testMux_ServeHTTP(t, m, tests)
 }
 
 func TestMux_Handle_root(t *testing.T) {
