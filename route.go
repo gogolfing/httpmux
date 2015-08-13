@@ -76,13 +76,6 @@ func (route *Route) Handle(handler http.Handler, methods ...string) *Route {
 	return route
 }
 
-func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
-	if route.routeHandler == nil {
-		return nil, errors.ErrNotFound
-	}
-	return route.routeHandler.getHandler(r)
-}
-
 func (route *Route) ListRoutes() []string {
 	result := []string{}
 	methodsRoutes := route.listMethodsRoutes()
@@ -107,6 +100,13 @@ func (route *Route) listMethodsRoutes() [][]string {
 		}
 	}
 	return result
+}
+
+func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
+	if route.routeHandler == nil {
+		return nil, errors.ErrNotFound
+	}
+	return route.routeHandler.getHandler(r)
 }
 
 func (route *Route) search(path string) (*Route, *Route, string) {
