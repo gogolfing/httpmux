@@ -17,7 +17,7 @@ const (
 var varRegexp *regexp.Regexp
 
 func init() {
-	varRegexp = regexp.MustCompile(`\{\*?[A-Za-z]+\}`)
+	varRegexp = regexp.MustCompile(`\{\*?[A-Za-z_]+\}`)
 }
 
 func TypeOf(path string) PathType {

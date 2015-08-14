@@ -5,6 +5,87 @@ import (
 	"testing"
 )
 
+func TestTypeOf(t *testing.T) {
+	tests := []struct {
+		path   string
+		result PathType
+	}{
+		{"static", PathTypeStatic},
+		{"{variable}", PathTypePartVariable},
+		{"{*endVariable}", PathTypeEndVariable},
+	}
+	for _, test := range tests {
+		result := TypeOf(test.path)
+		if result != test.result {
+			t.Errorf("TypeOf(%q) = %v want %v", test.path, result, test.result)
+		}
+	}
+}
+
+func TestPathType_IsVariable(t *testing.T) {
+	pt := PathTypePartVariable
+	if !pt.IsVariable() {
+		t.Fail()
+	}
+	pt = PathTypeEndVariable
+	if !pt.IsVariable() {
+		t.Fail()
+	}
+	pt = PathTypeStatic
+	if pt.IsVariable() {
+		t.Fail()
+	}
+}
+
+func TestPathType_IsPartVariable(t *testing.T) {
+	pt := PathTypePartVariable
+	if !pt.IsPartVariable() {
+		t.Fail()
+	}
+	pt = PathTypeStatic
+	if pt.IsPartVariable() {
+		t.Fail()
+	}
+}
+
+func TestPathType_IsEndVariable(t *testing.T) {
+	pt := PathTypeEndVariable
+	if !pt.IsEndVariable() {
+		t.Fail()
+	}
+	pt = PathTypeStatic
+	if pt.IsEndVariable() {
+		t.Fail()
+	}
+}
+
+func TestParseVariable(t *testing.T) {
+	tests := []struct {
+		variable      string
+		path          string
+		name          string
+		value         string
+		remainingPath string
+	}{
+		{"{one}", "something", "one", "something", ""},
+		{"{two_something}", "something/else", "two_something", "something", "/else"},
+		{"{*three}", "something", "three", "something", ""},
+		{"{*four}", "something/else.go", "four", "something/else.go", ""},
+		{"{shouldNotHappen}", "/something", "shouldNotHappen", "", "/something"},
+	}
+	for _, test := range tests {
+		name, value, remainingPath := ParseVariable(test.variable, test.path)
+		if name != test.name || value != test.value || remainingPath != test.remainingPath {
+			t.Errorf(
+				"ParseVariable(%q, %q) = %q, %q, %q want %q, %q, %q",
+				test.variable, test.path,
+				name, value, remainingPath,
+				test.name, test.value, test.remainingPath,
+			)
+		}
+	}
+}
+
 func TestSplitPathVars(t *testing.T) {
 	tests := []struct {
 		path   string
@@ -17,7 +98,7 @@ func TestSplitPathVars(t *testing.T) {
 		{"{var}thing", []string{"{var}", "thing"}},
 		{"some{var}", []string{"some", "{var}"}},
 		{"{some}{thing}", []string{"{some}", "", "{thing}"}},
-		{"so{a}me{b}th{c}ing", []string{"so", "{a}", "me", "{b}", "th", "{c}", "ing"}},
+		{"so{a}me{b_}th{c}ing", []string{"so", "{a}", "me", "{b_}", "th", "{c}", "ing"}},
 		{"some{a}{b}thing", []string{"some", "{a}", "", "{b}", "thing"}},
 		{"some{1234}thing", []string{"some{1234}thing"}},
 		{"some{*thing}", []string{"some", "{*thing}"}},
@@ -41,6 +122,7 @@ func TestIsEndVariable(t *testing.T) {
 		//true cases.
 		{"{*var}", true},
 		{"{*THISISAVARIABLE}", true},
+		{"{*this_is_an_end_variable}", true},
 		//false cases.
 		{"{var}", false},
 		{"{THISISAVARIABLE}", false},
@@ -66,6 +148,7 @@ func TestIsVariable(t *testing.T) {
 		//true cases.
 		{"{var}", true},
 		{"{THISISAVARIABLE}", true},
+		{"{this_is_a_variable}", true},
 		//false cases.
 		{"{ var }", false},
 		{"something", false},
@@ -89,6 +172,7 @@ func TestFindAllVarSubmatchIndex(t *testing.T) {
 		//will find variables.
 		{"something", [][]int{}},
 		{"some{var}thing", [][]int{[]int{4, 9}}},
+		{"{this_is_a_variable}", [][]int{[]int{0, 20}}},
 		{"some{el{se}thing", [][]int{[]int{7, 11}}},
 		{"some{el}se}thing", [][]int{[]int{4, 8}}},
 		{"some{e{l}se}thing", [][]int{[]int{6, 9}}},
