@@ -1,6 +1,7 @@
 package httpmux
 
 import (
+	"fmt"
 	"net/http"
 
 	errors "github.com/gogolfing/httpmux/errors"
@@ -10,6 +11,10 @@ import (
 type Variable struct {
 	Name  string
 	Value string
+}
+
+func (v *Variable) String() string {
+	return fmt.Sprintf("&%v", *v)
 }
 
 type Route struct {
@@ -133,8 +138,11 @@ func (route *Route) searchSubRoute(path string) (*Route, *Variable, string) {
 		name, value, remainingPath := muxpath.ParseVariable(route.children[0].path, path)
 		return route.children[0], &Variable{name, value}, remainingPath
 	}
-	_, found, remainingPath := route.findStaticSubRoute(path)
-	return found, nil, remainingPath
+	found, _, prefix := route.findStaticChildWithCommonPrefix(path)
+	if found != nil && len(found.path) == len(prefix) {
+		return found, nil, path[len(prefix):]
+	}
+	return nil, nil, path
 }
 
 func (route *Route) insertSubRoute(path string) (*Route, error) {
