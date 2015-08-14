@@ -26,7 +26,7 @@ func (t *trie) subRoute(path string) *Route {
 
 func (t *trie) getHandler(r *http.Request, path string) (http.Handler, error) {
 	//return nil, errors.ErrNotFound
-	parent, found, remainingPath := t.root.search(path)
+	parent, found, remainingPath := t.root.findStaticSubRoute(path)
 	if len(remainingPath) == 0 {
 		if found == nil {
 			return nil, errors.ErrNotFound

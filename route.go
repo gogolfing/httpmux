@@ -1,12 +1,16 @@
 package httpmux
 
 import (
-	"fmt"
 	"net/http"
 
 	errors "github.com/gogolfing/httpmux/errors"
 	muxpath "github.com/gogolfing/httpmux/path"
 )
+
+type Variable struct {
+	Name  string
+	Value string
+}
 
 type Route struct {
 	path         string
@@ -76,6 +80,13 @@ func (route *Route) Handle(handler http.Handler, methods ...string) *Route {
 	return route
 }
 
+func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
+	if route.routeHandler == nil {
+		return nil, errors.ErrNotFound
+	}
+	return route.routeHandler.getHandler(r)
+}
+
 func (route *Route) ListRoutes() []string {
 	result := []string{}
 	methodsRoutes := route.listMethodsRoutes()
@@ -102,15 +113,28 @@ func (route *Route) listMethodsRoutes() [][]string {
 	return result
 }
 
-func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
-	if route.routeHandler == nil {
-		return nil, errors.ErrNotFound
+func (route *Route) search(path string) (*Route, []*Variable, string) {
+	vars := []*Variable{}
+	parent := route
+	child, tempVar, remainingPath := parent.searchSubRoute(path)
+	for child != nil {
+		if tempVar != nil {
+			vars = append(vars, tempVar)
+		}
+		path = remainingPath
+		parent = child
+		child, tempVar, remainingPath = parent.searchSubRoute(path)
 	}
-	return route.routeHandler.getHandler(r)
+	return parent, vars, remainingPath
 }
 
-func (route *Route) search(path string) (*Route, *Route, string) {
-	return route.findStaticSubRoute(path)
+func (route *Route) searchSubRoute(path string) (*Route, *Variable, string) {
+	if route.hasVariableChild() {
+		name, value, remainingPath := muxpath.ParseVariable(route.children[0].path, path)
+		return route.children[0], &Variable{name, value}, remainingPath
+	}
+	_, found, remainingPath := route.findStaticSubRoute(path)
+	return found, nil, remainingPath
 }
 
 func (route *Route) insertSubRoute(path string) (*Route, error) {
@@ -144,19 +168,11 @@ func (route *Route) insertVariableSubRoute(path string) (*Route, error) {
 		if route.variableChildPath() == path {
 			return route.children[0], nil
 		}
-		return nil, fmt.Errorf(
-			"cannot have unequal variables at the same location: %v, %v",
-			route.variableChildPath(),
-			path,
-		)
+		return nil, &errors.ErrUnequalVars{route.variableChildPath(), path}
 	}
 	//must have static children.
 	if len(route.children) > 0 {
-		return nil, fmt.Errorf(
-			"cannot have variable: %v at same location as static path: %v",
-			path,
-			"..."+route.path+"...",
-		)
+		return nil, &errors.ErrOverlapStaticVar{path, "..." + route.path + "..."}
 	}
 	//must have empty children.
 	return route.insertChildAtIndex(newRoute(path), 0), nil
@@ -167,29 +183,17 @@ func (route *Route) insertStaticSubRoute(path string) (*Route, error) {
 		return route, nil
 	}
 	if route.isEndVariable() {
-		return nil, fmt.Errorf(
-			"cannot have any path after an end variable: %v %v",
-			route.path,
-			path,
-		)
+		return nil, &errors.ErrOverlapStaticVar{route.path, path}
 	}
 	if route.hasVariableChild() {
-		return nil, fmt.Errorf(
-			"cannot have static path: %v at same location as variable: %v",
-			path,
-			route.variableChildPath(),
-		)
+		return nil, &errors.ErrOverlapStaticVar{path, route.variableChildPath()}
 	}
 	parent, found, remainingPath := route.findStaticSubRoute(path)
 	if len(remainingPath) == 0 {
 		return found, nil
 	}
 	if parent.hasVariableChild() {
-		return nil, fmt.Errorf(
-			"cannot have static path: %v at same location as variable: %v",
-			remainingPath,
-			parent.variableChildPath(),
-		)
+		return nil, &errors.ErrOverlapStaticVar{remainingPath, parent.variableChildPath()}
 	}
 	if found == nil {
 		return parent.insertStaticChildPath(remainingPath), nil

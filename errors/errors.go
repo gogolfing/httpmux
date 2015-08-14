@@ -57,3 +57,12 @@ type ErrConsecutiveVars struct {
 func (e *ErrConsecutiveVars) Error() string {
 	return fmt.Sprintf("cannot have two immediately consecutive variables: %q, %q", e.Variable1, e.Variable2)
 }
+
+type ErrUnequalVars struct {
+	Variable1 string
+	Variable2 string
+}
+
+func (e *ErrUnequalVars) Error() string {
+	return fmt.Sprintf("cannot have two unequal variables at the same location: %q, %q", e.Variable1, e.Variable2)
+}

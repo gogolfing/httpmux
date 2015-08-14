@@ -3,6 +3,7 @@ package path
 import (
 	pathlib "path"
 	"regexp"
+	"strings"
 )
 
 type PathType uint8
@@ -12,6 +13,12 @@ const (
 	PathTypePartVariable
 	PathTypeEndVariable
 )
+
+var varRegexp *regexp.Regexp
+
+func init() {
+	varRegexp = regexp.MustCompile(`\{\*?[A-Za-z]+\}`)
+}
 
 func TypeOf(path string) PathType {
 	if IsEndVariable(path) {
@@ -35,10 +42,16 @@ func (pt PathType) IsEndVariable() bool {
 	return pt == PathTypeEndVariable
 }
 
-var varRegexp *regexp.Regexp
-
-func init() {
-	varRegexp = regexp.MustCompile(`\{\*?[A-Za-z]+\}`)
+func ParseVariable(variable, path string) (string, string, string) {
+	isEnd := IsEndVariable(variable)
+	if isEnd {
+		return variable[2 : len(variable)-1], path, ""
+	}
+	index := strings.Index(path, "/")
+	if index < 0 {
+		index = len(path)
+	}
+	return variable[1 : len(variable)-1], path[:index], path[index:]
 }
 
 func SplitPathVars(path string) []string {
