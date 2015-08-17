@@ -29,10 +29,10 @@ func TestNew(t *testing.T) {
 }
 
 func TestNewHandlers(t *testing.T) {
-	methodNotAllowed := intHandler(0)
-	notFound := intHandler(1)
-	m := NewHandlers(methodNotAllowed, notFound)
-	if m.MethodNotAllowedHandler != methodNotAllowed || m.NotFoundHandler != notFound {
+	notFound := intHandler(0)
+	methodNotAllowed := intHandler(1)
+	m := NewHandlers(notFound, methodNotAllowed)
+	if m.NotFoundHandler != notFound || m.MethodNotAllowedHandler != methodNotAllowed {
 		t.Fail()
 	}
 }
@@ -116,6 +116,8 @@ func TestMux_SubRoute_variable(t *testing.T) {
 		{"GET", "/static/something", http.StatusOK, "3"},
 		{"GET", "/static/something/even/more/exciting", http.StatusOK, "3"},
 		{"GET", "/static/images", http.StatusOK, "4"},
+		{"GET", "/static/im", http.StatusOK, "3"},
+		{"GET", "/static/images/more", http.StatusOK, "3"},
 	}
 	testMux_ServeHTTP(t, m, tests)
 }
