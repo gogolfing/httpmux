@@ -8,7 +8,8 @@ import (
 )
 
 type Mux struct {
-	trie                    *trie
+	trie *Route
+
 	MethodNotAllowedHandler http.Handler
 	NotFoundHandler         http.Handler
 }
@@ -19,7 +20,7 @@ func New() *Mux {
 
 func NewHandlers(notFound, methodNotAllowed http.Handler) *Mux {
 	return &Mux{
-		newTrie(),
+		newRoute(""),
 		notFound,
 		methodNotAllowed,
 	}
@@ -34,16 +35,16 @@ func (m *Mux) HandleFunc(path string, handlerFunc http.HandlerFunc, methods ...s
 }
 
 func (m *Mux) Handle(path string, handler http.Handler, methods ...string) *Route {
-	return m.trie.handle(muxpath.EnsureRootSlash(path), handler, methods...)
+	return m.SubRoute(muxpath.EnsureRootSlash(path)).Handle(handler, methods...)
 }
 
 func (m *Mux) SubRoute(path string) *Route {
-	return m.trie.subRoute(muxpath.EnsureRootSlash(path))
+	return m.trie.SubRoute(muxpath.EnsureRootSlash(path))
 }
 
 func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := muxpath.Clean(r.URL.Path)
-	handler, err := m.trie.getHandler(r, path, true)
+	handler, _, err := m.trie.searchSubRouteHandler(r, path, true)
 	if err != nil {
 		m.serveError(w, r, err)
 		return
