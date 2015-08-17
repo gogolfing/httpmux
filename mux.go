@@ -43,7 +43,7 @@ func (m *Mux) SubRoute(path string) *Route {
 
 func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := muxpath.Clean(r.URL.Path)
-	handler, err := m.trie.getHandler(r, path)
+	handler, err := m.trie.getHandler(r, path, true)
 	if err != nil {
 		m.serveError(w, r, err)
 		return

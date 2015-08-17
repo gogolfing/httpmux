@@ -20,10 +20,10 @@ func (t *trie) subRoute(path string) *Route {
 	return t.root.SubRoute(path)
 }
 
-func (t *trie) getHandler(r *http.Request, path string) (http.Handler, error) {
+func (t *trie) getHandler(r *http.Request, path string, exact bool) (http.Handler, error) {
 	//return nil, errors.ErrNotFound
 
-	found, _, _ := t.root.searchSubRoute(path)
+	found, _, _ := t.root.searchSubRoute(path, exact)
 	//fmt.Println(r.Method, path, vars, remainingPath)
 	return found.getHandler(r)
 }

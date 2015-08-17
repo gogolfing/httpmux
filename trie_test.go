@@ -37,7 +37,7 @@ func TestTrie_getHandler(t *testing.T) {
 			trie.handle(path, intHandler(i), "GET")
 		}
 		r, _ := http.NewRequest("GET", "localhost", nil)
-		handler, err := trie.getHandler(r, test.path)
+		handler, err := trie.getHandler(r, test.path, true)
 		if handler != test.handler || err != test.err {
 			t.Errorf("trie.getHandler(%q) = %v, %v want %v, %v", test.path, handler, err, test.handler, test.err)
 		}
