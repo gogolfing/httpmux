@@ -26,7 +26,7 @@ func NewHandlers(notFound, methodNotAllowed http.Handler) *Mux {
 }
 
 func (m *Mux) Root() *Route {
-	return m.trie.root
+	return m.SubRoute("/")
 }
 
 func (m *Mux) HandleFunc(path string, handlerFunc http.HandlerFunc, methods ...string) *Route {

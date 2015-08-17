@@ -43,6 +43,13 @@ func TestNewRoute(t *testing.T) {
 	}
 }
 
+func TestNewRoute_empty(t *testing.T) {
+	route := newRoute("/")
+	if route.children != nil {
+		t.Fail()
+	}
+}
+
 func TestRoute_methodHandlers(t *testing.T) {
 	zero := intHandler(0)
 	one := intHandler(1)
@@ -354,7 +361,7 @@ func TestRoute_indexOfCommonPrefixChild(t *testing.T) {
 	}
 	for _, test := range tests {
 		route := newRoute("", test.children...)
-		index, prefix := route.indexOfCommonPrefixChild(test.path)
+		index, prefix := route.indexOfStaticCommonPrefixChild(test.path)
 		if index != test.index || prefix != test.prefix {
 			t.Errorf("route.indexOfCommonPrefixChild(%q) = %v, %q want %v, %q",
 				test.path, index, prefix, test.index, test.prefix,
@@ -391,7 +398,7 @@ func TestRoute_insertChildAtIndex(t *testing.T) {
 	}
 	for _, test := range tests {
 		route := newRoute("route", test.children...)
-		result := route.insertChildAtIndex(test.insert, test.index)
+		result := route.insertStaticChildAtIndex(test.insert, test.index)
 		if !areRoutesEqual(route.children, test.resultChildren) || result != test.resultReturn {
 			t.Errorf("%v insertChildAtIndex(%v, %v) = %v want %v", test.children, test.insert, test.index, route.children, test.resultChildren)
 		}

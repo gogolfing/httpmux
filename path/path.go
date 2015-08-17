@@ -76,6 +76,10 @@ func SplitPathVars(path string) []string {
 	return result
 }
 
+func IsPartVariable(path string) bool {
+	return IsVariable(path) && path[1] != '*'
+}
+
 func IsEndVariable(path string) bool {
 	return IsVariable(path) && path[1] == '*'
 }

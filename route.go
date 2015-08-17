@@ -18,18 +18,22 @@ func (v *Variable) String() string {
 }
 
 type Route struct {
-	path         string
-	pathType     muxpath.PathType
-	children     []*Route
+	path     string
+	pathType muxpath.PathType
+
+	children []*Route
+
+	varChild *Route
+
 	routeHandler *routeHandler
 }
 
 func newRoute(path string, children ...*Route) *Route {
 	return &Route{
-		path,
-		muxpath.TypeOf(path),
-		children,
-		nil,
+		path:         path,
+		pathType:     muxpath.TypeOf(path),
+		children:     children,
+		routeHandler: nil,
 	}
 }
 
@@ -121,22 +125,22 @@ func (route *Route) listMethodsRoutes() [][]string {
 func (route *Route) search(path string) (*Route, []*Variable, string) {
 	vars := []*Variable{}
 	parent := route
-	child, tempVar, remainingPath := parent.searchSubRoute(path)
+	child, tempVar, remainingPath := parent.searchChildren(path)
 	for child != nil {
 		if tempVar != nil {
 			vars = append(vars, tempVar)
 		}
 		path = remainingPath
 		parent = child
-		child, tempVar, remainingPath = parent.searchSubRoute(path)
+		child, tempVar, remainingPath = parent.searchChildren(path)
 	}
 	return parent, vars, remainingPath
 }
 
-func (route *Route) searchSubRoute(path string) (*Route, *Variable, string) {
+func (route *Route) searchChildren(path string) (*Route, *Variable, string) {
 	if route.hasVariableChild() {
-		name, value, remainingPath := muxpath.ParseVariable(route.children[0].path, path)
-		return route.children[0], &Variable{name, value}, remainingPath
+		name, value, remainingPath := muxpath.ParseVariable(route.variableChildPath(), path)
+		return route.varChild, &Variable{name, value}, remainingPath
 	}
 	found, _, prefix := route.findStaticChildWithCommonPrefix(path)
 	if found != nil && len(found.path) == len(prefix) {
@@ -155,7 +159,7 @@ func (route *Route) insertSubRoute(path string) (*Route, error) {
 	isVariable := muxpath.IsVariable(parts[0])
 	for _, part := range parts {
 		if isVariable {
-			result, err = result.insertVariableSubRoute(part)
+			result, err = result.insertVariableChild(part)
 		} else {
 			result, err = result.insertStaticSubRoute(part)
 		}
@@ -167,23 +171,24 @@ func (route *Route) insertSubRoute(path string) (*Route, error) {
 	return result, nil
 }
 
-func (route *Route) insertVariableSubRoute(path string) (*Route, error) {
+func (route *Route) insertVariableChild(variable string) (*Route, error) {
 	if route.isVariable() {
-		return nil, &errors.ErrConsecutiveVars{route.path, path}
+		return nil, &errors.ErrConsecutiveVars{route.path, variable}
 	}
 	//must have static path type.
 	if route.hasVariableChild() {
-		if route.variableChildPath() == path {
-			return route.children[0], nil
+		if route.variableChildPath() == variable {
+			return route.varChild, nil
 		}
-		return nil, &errors.ErrUnequalVars{route.variableChildPath(), path}
+		return nil, &errors.ErrUnequalVars{route.variableChildPath(), variable}
 	}
 	//must have static children.
-	if len(route.children) > 0 {
-		return nil, &errors.ErrOverlapStaticVar{path, "..." + route.path + "..."}
+	if len(route.children) > 0 && muxpath.IsPartVariable(variable) {
+		return nil, &errors.ErrOverlapStaticVar{variable, "..." + route.path + "..."}
 	}
-	//must have empty children.
-	return route.insertChildAtIndex(newRoute(path), 0), nil
+	//must have empty children OR variable to insert is an end variable.
+	route.varChild = newRoute(variable)
+	return route.varChild, nil
 }
 
 func (route *Route) insertStaticSubRoute(path string) (*Route, error) {
@@ -193,14 +198,14 @@ func (route *Route) insertStaticSubRoute(path string) (*Route, error) {
 	if route.isEndVariable() {
 		return nil, &errors.ErrOverlapStaticVar{route.path, path}
 	}
-	if route.hasVariableChild() {
+	if route.hasPartVariableChild() {
 		return nil, &errors.ErrOverlapStaticVar{path, route.variableChildPath()}
 	}
 	parent, found, remainingPath := route.findStaticSubRoute(path)
 	if len(remainingPath) == 0 {
 		return found, nil
 	}
-	if parent.hasVariableChild() {
+	if parent.hasPartVariableChild() {
 		return nil, &errors.ErrOverlapStaticVar{remainingPath, parent.variableChildPath()}
 	}
 	if found == nil {
@@ -214,8 +219,8 @@ func (route *Route) insertStaticChildPath(path string) *Route {
 	if len(path) == 0 {
 		return route
 	}
-	index, _ := route.indexOfCommonPrefixChild(path)
-	return route.insertChildAtIndex(newRoute(path), ^index)
+	index, _ := route.indexOfStaticCommonPrefixChild(path)
+	return route.insertStaticChildAtIndex(newRoute(path), ^index)
 }
 
 func (route *Route) splitStaticChild(path string) (*Route, string) {
@@ -244,30 +249,42 @@ func (route *Route) findStaticChildWithCommonPrefix(path string) (*Route, int, s
 	if route.hasVariableChild() {
 		return nil, -1, path
 	}
-	index, prefix := route.indexOfCommonPrefixChild(path)
+	index, prefix := route.indexOfStaticCommonPrefixChild(path)
 	if index >= 0 {
 		return route.children[index], index, prefix
 	}
 	return nil, index, prefix
 }
 
+func (route *Route) hasPartVariableChild() bool {
+	return route.hasVariableChild() && route.varChild.isPartVariable()
+}
+
+func (route *Route) hasEndVariableChild() bool {
+	return route.hasVariableChild() && route.varChild.isEndVariable()
+}
+
 func (route *Route) hasVariableChild() bool {
-	return len(route.children) == 1 && route.children[0].isVariable()
+	return route.varChild != nil
 }
 
 func (route *Route) variableChildPath() string {
-	return route.children[0].path
+	return route.varChild.path
 }
 
 func (route *Route) isVariable() bool {
 	return route.pathType.IsVariable()
 }
 
+func (route *Route) isPartVariable() bool {
+	return route.pathType.IsPartVariable()
+}
+
 func (route *Route) isEndVariable() bool {
 	return route.pathType.IsEndVariable()
 }
 
-func (route *Route) indexOfCommonPrefixChild(path string) (int, string) {
+func (route *Route) indexOfStaticCommonPrefixChild(path string) (int, string) {
 	low, high := 0, len(route.children)
 	for low < high {
 		mid := (low + high) >> 1
@@ -285,7 +302,7 @@ func (route *Route) indexOfCommonPrefixChild(path string) (int, string) {
 	return ^high, ""
 }
 
-func (route *Route) insertChildAtIndex(child *Route, index int) *Route {
+func (route *Route) insertStaticChildAtIndex(child *Route, index int) *Route {
 	if index < 0 || index > len(route.children) {
 		return nil
 	}
