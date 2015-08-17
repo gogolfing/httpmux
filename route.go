@@ -138,10 +138,27 @@ func (route *Route) search(path string) (*Route, []*Variable, string) {
 }
 
 func (route *Route) searchChildren(path string) (*Route, *Variable, string) {
-	if route.hasVariableChild() {
-		name, value, remainingPath := muxpath.ParseVariable(route.variableChildPath(), path)
-		return route.varChild, &Variable{name, value}, remainingPath
+	if route.hasPartVariableChild() {
+		return route.searchPartVariableChild(path)
 	}
+	if route.hasEndVariableChild() {
+		return route.searchPartVariableChild(path)
+	}
+	return route.searchStaticChildren(path)
+}
+
+func (route *Route) searchPartVariableChild(path string) (*Route, *Variable, string) {
+	name, value, remainingPath := muxpath.ParseVariable(route.variableChildPath(), path)
+	return route.varChild, &Variable{name, value}, remainingPath
+}
+
+//func (route *Route) searchEndVariableChild(path string) {
+//	if route.hasStaticChildren() {
+//
+//	}
+//}
+
+func (route *Route) searchStaticChildren(path string) (*Route, *Variable, string) {
 	found, _, prefix := route.findStaticChildWithCommonPrefix(path)
 	if found != nil && len(found.path) == len(prefix) {
 		return found, nil, path[len(prefix):]
@@ -182,8 +199,8 @@ func (route *Route) insertVariableChild(variable string) (*Route, error) {
 		}
 		return nil, &errors.ErrUnequalVars{route.variableChildPath(), variable}
 	}
-	//must have static children.
-	if len(route.children) > 0 && muxpath.IsPartVariable(variable) {
+	//must not have a variable child.
+	if route.hasStaticChildren() && muxpath.IsPartVariable(variable) {
 		return nil, &errors.ErrOverlapStaticVar{variable, "..." + route.path + "..."}
 	}
 	//must have empty children OR variable to insert is an end variable.
@@ -266,6 +283,10 @@ func (route *Route) hasEndVariableChild() bool {
 
 func (route *Route) hasVariableChild() bool {
 	return route.varChild != nil
+}
+
+func (route *Route) hasStaticChildren() bool {
+	return len(route.children) > 0
 }
 
 func (route *Route) variableChildPath() string {

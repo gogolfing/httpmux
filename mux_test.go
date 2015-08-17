@@ -108,20 +108,16 @@ func TestMux_SubRoute_variable(t *testing.T) {
 	m.SubRoute("/clients/{client_id}").Get(intHandler(1))
 	m.SubRoute("/clients/{client_id}/locations/{location_id}").Get(intHandler(2))
 	m.SubRoute("static/{*filepath}").Get(intHandler(3))
+	m.SubRoute("/static/images").Get(intHandler(4))
 	tests := []serveHTTPTest{
 		{"GET", "/clients/1", http.StatusOK, "1"},
 		{"GET", "/clients/something/else", http.StatusOK, "1"},
 		{"GET", "clients/2/locations/dfw", http.StatusOK, "2"},
 		{"GET", "/static/something", http.StatusOK, "3"},
 		{"GET", "/static/something/even/more/exciting", http.StatusOK, "3"},
+		//{"GET", "/static/images", http.StatusOK, "4"},
 	}
 	testMux_ServeHTTP(t, m, tests)
-}
-
-func TestMux_SubRoute_panic(t *testing.T) {
-	m := New()
-	m.SubRoute("/{*index}").Get(intHandler(0))
-	m.SubRoute("/assets").Get(intHandler(1))
 }
 
 func TestMux_Handle_root(t *testing.T) {
