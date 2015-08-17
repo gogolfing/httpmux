@@ -89,13 +89,6 @@ func (route *Route) Handle(handler http.Handler, methods ...string) *Route {
 	return route
 }
 
-func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
-	if route.routeHandler == nil {
-		return nil, errors.ErrNotFound
-	}
-	return route.routeHandler.getHandler(r)
-}
-
 func (route *Route) ListRoutes() []string {
 	result := []string{}
 	methodsRoutes := route.listMethodsRoutes()
@@ -122,7 +115,7 @@ func (route *Route) listMethodsRoutes() [][]string {
 	return result
 }
 
-func (route *Route) search(path string) (*Route, []*Variable, string) {
+func (route *Route) searchSubRoute(path string) (*Route, []*Variable, string) {
 	vars := []*Variable{}
 	parent := route
 	child, tempVar, remainingPath := parent.searchChildren(path)
@@ -154,7 +147,8 @@ func (route *Route) searchPartVariableChild(path string) (*Route, *Variable, str
 
 //func (route *Route) searchEndVariableChild(path string) {
 //	if route.hasStaticChildren() {
-//
+//		route, vars, remainingPath := route.searchStaticChildren(path)
+//		if remainingPath
 //	}
 //}
 
@@ -164,6 +158,27 @@ func (route *Route) searchStaticChildren(path string) (*Route, *Variable, string
 		return found, nil, path[len(prefix):]
 	}
 	return nil, nil, path
+}
+
+func (route *Route) hasAddedSlashHandler() bool {
+	child, _, _ := route.findStaticChildWithCommonPrefix("/")
+	if child != nil {
+		if child.path == "/" {
+			return child.isRegistered()
+		}
+	}
+	return route.isRegistered()
+}
+
+func (route *Route) isRegistered() bool {
+	return route.routeHandler != nil
+}
+
+func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
+	if route.isRegistered() {
+		return route.routeHandler.getHandler(r)
+	}
+	return nil, errors.ErrNotFound
 }
 
 func (route *Route) insertSubRoute(path string) (*Route, error) {
