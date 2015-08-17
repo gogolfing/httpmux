@@ -116,9 +116,9 @@ func (route *Route) listMethodsRoutes() [][]string {
 }
 
 func (route *Route) searchSubRouteHandler(r *http.Request, path string, exact bool) (http.Handler, []*Variable, error) {
-	route, vars, remainingPath := route.searchSubRoute(path, exact)
-	if route.isServable(remainingPath, exact) {
-		handler, err := route.getHandler(r)
+	found, vars, remainingPath := route.searchSubRoute(path, exact)
+	if found.isServable(remainingPath, exact) {
+		handler, err := found.getHandler(r)
 		return handler, vars, err
 	}
 	return nil, nil, errors.ErrNotFound
@@ -136,29 +136,38 @@ func (route *Route) searchSubRoute(path string, exact bool) (*Route, []*Variable
 		parent = child
 		child, tempVars, remainingPath = parent.searchChildren(path, exact)
 	}
-	return route, vars, path
+	return parent, vars, path
 }
 
 func (route *Route) searchChildren(path string, exact bool) (*Route, []*Variable, string) {
 	if route.hasEndVariableChild() {
 		return route.searchEndVariableChild(path, exact)
 	}
-	return route.searchPartVariableOrStaticChild(path, exact)
+	return route.searchPartVariableOrStaticChild(path)
 }
 
 func (route *Route) searchEndVariableChild(path string, exact bool) (*Route, []*Variable, string) {
-	found, vars, remainingPath := route.searchPartVariableOrStaticChild(path, exact)
+	found, vars, remainingPath := route.searchPossibleNonEndVariableSubRoute(path, exact)
 	if found != nil && found.isServable(remainingPath, exact) {
 		return found, vars, remainingPath
 	}
 	return route.searchParseVariableChild(path)
 }
 
-func (route *Route) searchPartVariableOrStaticChild(path string, exact bool) (*Route, []*Variable, string) {
+func (route *Route) searchPossibleNonEndVariableSubRoute(path string, exact bool) (*Route, []*Variable, string) {
+	child, childVars, remainingPath := route.searchPartVariableOrStaticChild(path)
+	if child == nil {
+		return nil, nil, path
+	}
+	found, vars, remainingPath := child.searchSubRoute(remainingPath, exact)
+	return found, append(childVars, vars...), remainingPath
+}
+
+func (route *Route) searchPartVariableOrStaticChild(path string) (*Route, []*Variable, string) {
 	if route.hasPartVariableChild() {
 		return route.searchParseVariableChild(path)
 	}
-	return route.searchStaticChildren(path)
+	return route.searchStaticChild(path)
 }
 
 func (route *Route) searchParseVariableChild(path string) (*Route, []*Variable, string) {
@@ -166,70 +175,13 @@ func (route *Route) searchParseVariableChild(path string) (*Route, []*Variable, 
 	return route.varChild, []*Variable{&Variable{name, value}}, remainingPath
 }
 
-func (route *Route) searchStaticChildren(path string) (*Route, []*Variable, string) {
+func (route *Route) searchStaticChild(path string) (*Route, []*Variable, string) {
 	found, _, prefix := route.findStaticChildWithCommonPrefix(path)
 	if found != nil && len(found.path) == len(prefix) {
 		return found, nil, path[len(prefix):]
 	}
 	return nil, nil, path
 }
-
-//func (route *Route) searchSubRoute(path string, exact bool) (*Route, []*Variable, string) {
-//	vars := []*Variable{}
-//	parent := route
-//	child, tempVar, remainingPath := parent.searchChildren(path, exact)
-//	for child != nil {
-//		if tempVar != nil {
-//			vars = append(vars, tempVar)
-//		}
-//		path = remainingPath
-//		parent = child
-//		child, tempVar, remainingPath = parent.searchChildren(path, exact)
-//	}
-//	return parent, vars, remainingPath
-//}
-//
-//func (route *Route) searchChildren(path string, exact bool) (*Route, *Variable, string) {
-//	if route.hasPartVariableChild() {
-//		return route.searchPartVariableChild(path)
-//	}
-//	if route.hasEndVariableChild() {
-//		return route.searchPartVariableChild(path)
-//	}
-//	return route.searchStaticChildren(path)
-//}
-//
-//func (route *Route) searchEndVariableChild(path string, exact bool) (*Route, []*Variable, string) {
-//	if route.hasStaticChildren() {
-//		route, vars, remainingPath := route.searchStaticChildren(path)
-//		if route != nil {
-//			return route.searchSubRoute(remainingPath, exact)
-//		}
-//	}
-//}
-//
-//func (route *Route) searchPartVariableChild(path string) (*Route, *Variable, string) {
-//	name, value, remainingPath := muxpath.ParseVariable(route.variableChildPath(), path)
-//	return route.varChild, &Variable{name, value}, remainingPath
-//}
-//
-//func (route *Route) searchStaticChildren(path string) (*Route, *Variable, string) {
-//	found, _, prefix := route.findStaticChildWithCommonPrefix(path)
-//	if found != nil && len(found.path) == len(prefix) {
-//		return found, nil, path[len(prefix):]
-//	}
-//	return nil, nil, path
-//}
-//
-//func (route *Route) hasAddedSlashHandler() bool {
-//	child, _, _ := route.findStaticChildWithCommonPrefix("/")
-//	if child != nil {
-//		if child.path == "/" {
-//			return child.isRegistered()
-//		}
-//	}
-//	return route.isRegistered()
-//}
 
 func (route *Route) isServable(remainingPath string, exact bool) bool {
 	if exact {
@@ -347,9 +299,6 @@ func (route *Route) findStaticSubRoute(path string) (*Route, *Route, string) {
 }
 
 func (route *Route) findStaticChildWithCommonPrefix(path string) (*Route, int, string) {
-	if route.hasVariableChild() {
-		return nil, -1, path
-	}
 	index, prefix := route.indexOfStaticCommonPrefixChild(path)
 	if index >= 0 {
 		return route.children[index], index, prefix
@@ -429,4 +378,8 @@ func (route *Route) Methods() []string {
 		return route.routeHandler.methods()
 	}
 	return []string{}
+}
+
+func (route *Route) String() string {
+	return fmt.Sprintf("&%v", *route)
 }

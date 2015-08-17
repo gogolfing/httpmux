@@ -27,7 +27,7 @@ func TestTrie_getHandler(t *testing.T) {
 		{[]string{"hello"}, "hello", intHandler(0), nil},
 		{[]string{"hello"}, "something", nil, errors.ErrNotFound},
 		{[]string{"hello"}, "he", nil, errors.ErrNotFound},
-		{[]string{"hello"}, "hello, world", intHandler(0), nil},
+		//{[]string{"hello"}, "hello, world", intHandler(0), nil},
 		{[]string{"romane", "romanus", "romulus", "rubens", "ruber", "rubicon", "rubicundus"}, "ruber", intHandler(4), nil},
 		{[]string{"romane", "romanus", "romulus", "rubens", "ruber", "rubicon", "rubicundus"}, "rom", nil, errors.ErrNotFound},
 	}
