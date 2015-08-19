@@ -112,7 +112,7 @@ func TestMux_SubRoute_variable(t *testing.T) {
 	tests := []serveHTTPTest{
 		{"GET", "/clients/1", http.StatusOK, "1"},
 		//{"GET", "/clients/something/else", http.StatusOK, "1"},
-		{"GET", "clients/2/locations/dfw", http.StatusOK, "2"},
+		{"GET", "/clients/2/locations/dfw", http.StatusOK, "2"},
 		{"GET", "/static/something", http.StatusOK, "3"},
 		{"GET", "/static/something/even/more/exciting", http.StatusOK, "3"},
 		{"GET", "/static/images", http.StatusOK, "4"},

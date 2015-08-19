@@ -129,7 +129,7 @@ func (route *Route) searchSubRoute(path string, exact bool) (*Route, []*Variable
 	parent := route
 	child, tempVars, remainingPath := parent.searchChildren(path, exact)
 	for child != nil {
-		if tempVars == nil {
+		if len(tempVars) > 0 {
 			vars = append(vars, tempVars...)
 		}
 		path = remainingPath

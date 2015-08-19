@@ -9,8 +9,8 @@ import (
 )
 
 type Mapper interface {
-	Set(*http.Request, []*Variable)
-	Delete(*http.Request)
+	SetVars(*http.Request, []*Variable)
+	DeleteVars(*http.Request)
 }
 
 type Mux struct {
@@ -98,7 +98,7 @@ func (m *Mux) mapVariables(r *http.Request, vars []*Variable) {
 	defer m.Unlock()
 	m.varMap[r] = vars
 	if m.Mapper != nil {
-		m.Mapper.Set(r, vars)
+		m.Mapper.SetVars(r, vars)
 	}
 }
 
@@ -107,7 +107,7 @@ func (m *Mux) unmapVariables(r *http.Request) {
 	defer m.Unlock()
 	delete(m.varMap, r)
 	if m.Mapper != nil {
-		m.Mapper.Delete(r)
+		m.Mapper.DeleteVars(r)
 	}
 }
 
