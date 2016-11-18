@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"sync"
 
-	errors "github.com/gogolfing/httpmux/errors"
 	muxpath "github.com/gogolfing/httpmux/path"
 )
 
@@ -78,17 +77,17 @@ func (m *Mux) serveError(w http.ResponseWriter, r *http.Request, err error) {
 }
 
 func (m *Mux) getErrorHandler(err error) http.Handler {
-	if handler, ok := err.(errors.ErrMethodNotAllowed); ok {
+	if handler, ok := err.(ErrMethodNotAllowed); ok {
 		if m.MethodNotAllowedHandler != nil {
 			return m.MethodNotAllowedHandler
 		}
 		return handler
 	}
-	if err == errors.ErrNotFound {
+	if err == ErrNotFound {
 		if m.NotFoundHandler != nil {
 			return m.NotFoundHandler
 		}
-		return errors.ErrNotFound
+		return ErrNotFound
 	}
 	return nil
 }

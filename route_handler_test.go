@@ -6,8 +6,6 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
-
-	errors "github.com/gogolfing/httpmux/errors"
 )
 
 type intHandler int
@@ -26,13 +24,13 @@ func TestRouteHandler_getHandler(t *testing.T) {
 		result         http.Handler
 		err            error
 	}{
-		{nil, nil, nil, "GET", nil, errors.ErrNotFound},
+		{nil, nil, nil, "GET", nil, ErrNotFound},
 		{zero, nil, zero, "GET", zero, nil},
-		{zero, nil, nil, "GET", nil, errors.ErrNotFound}, //this overwrites rh.handler.
+		{zero, nil, nil, "GET", nil, ErrNotFound}, //this overwrites rh.handler.
 		{nil, []string{"GET"}, nil, "GET", nil, nil},
 		{nil, []string{"GET"}, zero, "GET", zero, nil},
 		{zero, []string{"GET"}, nil, "PUT", zero, nil},
-		{nil, []string{"GET", "POST"}, zero, "PUT", nil, errors.ErrMethodNotAllowed([]string{"GET", "POST"})},
+		{nil, []string{"GET", "POST"}, zero, "PUT", nil, ErrMethodNotAllowed([]string{"GET", "POST"})},
 	}
 	for _, test := range tests {
 		rh := &routeHandler{
@@ -46,10 +44,10 @@ func TestRouteHandler_getHandler(t *testing.T) {
 			t.Errorf("%v.getHandler(%q) = %v, %v want %v, %v", rh, r.Method, result, err, test.result, test.err)
 		}
 		if err != nil {
-			errMethods, ok := err.(errors.ErrMethodNotAllowed)
+			errMethods, ok := err.(ErrMethodNotAllowed)
 			if ok {
 				actual := []string(errMethods)
-				expected := []string(test.err.(errors.ErrMethodNotAllowed))
+				expected := []string(test.err.(ErrMethodNotAllowed))
 				if !reflect.DeepEqual(actual, expected) {
 					t.Errorf("%v.getHandler(%q) ErrMethodNotAllowed methods = %v want %v", rh, r.Method, actual, expected)
 				}

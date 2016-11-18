@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
-
-	errors "github.com/gogolfing/httpmux/errors"
 )
 
 type routeHandler struct {
@@ -18,7 +16,7 @@ func (rh *routeHandler) getHandler(r *http.Request) (http.Handler, error) {
 		if rh.handler != nil {
 			return rh.handler, nil
 		}
-		return nil, errors.ErrNotFound
+		return nil, ErrNotFound
 	}
 	if h, ok := rh.methodHandlers[r.Method]; ok {
 		return h, nil
@@ -26,7 +24,7 @@ func (rh *routeHandler) getHandler(r *http.Request) (http.Handler, error) {
 	if rh.handler != nil {
 		return rh.handler, nil
 	}
-	return nil, errors.ErrMethodNotAllowed(rh.methods())
+	return nil, ErrMethodNotAllowed(rh.methods())
 }
 
 func (rh *routeHandler) handleFunc(hf http.HandlerFunc, methods ...string) {

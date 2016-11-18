@@ -5,8 +5,6 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
-
-	errors "github.com/gogolfing/httpmux/errors"
 )
 
 var (
@@ -138,7 +136,7 @@ func testRouteResponse(t *testing.T, route *Route, method string, code int, resp
 func TestRoute_getHandler_routeHandleNil(t *testing.T) {
 	route := newRoute("")
 	handler, err := route.getHandler(nil)
-	if handler != nil || err != errors.ErrNotFound {
+	if handler != nil || err != ErrNotFound {
 		t.Fail()
 	}
 }

@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"testing"
 
-	errors "github.com/gogolfing/httpmux/errors"
 	muxpath "github.com/gogolfing/httpmux/path"
 )
 
@@ -158,8 +157,8 @@ func TestMux_serveError(t *testing.T) {
 		code     int
 		response string
 	}{
-		{errors.ErrMethodNotAllowed([]string{"GET"}), http.StatusMethodNotAllowed, ResponseMethodNotAllowed},
-		{errors.ErrNotFound, http.StatusNotFound, ResponseNotFound},
+		{ErrMethodNotAllowed([]string{"GET"}), http.StatusMethodNotAllowed, ResponseMethodNotAllowed},
+		{ErrNotFound, http.StatusNotFound, ResponseNotFound},
 		{ErrUnknown, 200, ""}, //not semantically correct but is result of empty response.
 	}
 	for _, test := range tests {
@@ -175,7 +174,7 @@ func TestMux_serveError(t *testing.T) {
 
 func TestMux_getErrorHandler_methodNotAllowed(t *testing.T) {
 	m := New()
-	err := errors.ErrMethodNotAllowed([]string{"GET"})
+	err := ErrMethodNotAllowed([]string{"GET"})
 
 	handler := m.getErrorHandler(err)
 	if reflect.DeepEqual(handler, []string{"GET"}) {
@@ -192,7 +191,7 @@ func TestMux_getErrorHandler_methodNotAllowed(t *testing.T) {
 
 func TestMux_getErrorHandler_notFound(t *testing.T) {
 	m := New()
-	err := errors.ErrNotFound
+	err := ErrNotFound
 
 	handler := m.getErrorHandler(err)
 	if handler != err {
