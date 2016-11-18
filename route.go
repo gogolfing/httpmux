@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	errors "github.com/gogolfing/httpmux/errors"
+	muxerrors "github.com/gogolfing/httpmux/errors"
 	muxpath "github.com/gogolfing/httpmux/path"
 )
 
@@ -121,7 +121,7 @@ func (route *Route) searchSubRouteHandler(r *http.Request, path string, exact bo
 		handler, err := found.getHandler(r)
 		return handler, vars, err
 	}
-	return nil, nil, errors.ErrNotFound
+	return nil, nil, muxerrors.ErrNotFound
 }
 
 func (route *Route) searchSubRoute(path string, exact bool) (*Route, []*Variable, string) {
@@ -195,7 +195,7 @@ func (route *Route) getHandler(r *http.Request) (http.Handler, error) {
 	if route.isRegistered() {
 		return route.routeHandler.getHandler(r)
 	}
-	return nil, errors.ErrNotFound
+	return nil, muxerrors.ErrNotFound
 }
 
 func (route *Route) isRegistered() bool {
@@ -226,18 +226,18 @@ func (route *Route) insertSubRoute(path string) (*Route, error) {
 
 func (route *Route) insertVariableChild(variable string) (*Route, error) {
 	if route.isVariable() {
-		return nil, &errors.ErrConsecutiveVars{route.path, variable}
+		return nil, &muxerrors.ErrConsecutiveVars{route.path, variable}
 	}
 	//must have static path type.
 	if route.hasVariableChild() {
 		if route.variableChildPath() == variable {
 			return route.varChild, nil
 		}
-		return nil, &errors.ErrUnequalVars{route.variableChildPath(), variable}
+		return nil, &muxerrors.ErrUnequalVars{route.variableChildPath(), variable}
 	}
 	//must not have a variable child.
 	if route.hasStaticChildren() && muxpath.IsPartVariable(variable) {
-		return nil, &errors.ErrOverlapStaticVar{variable, "..." + route.path + "..."}
+		return nil, &muxerrors.ErrOverlapStaticVar{variable, "..." + route.path + "..."}
 	}
 	//must have empty children OR variable to insert is an end variable.
 	route.varChild = newRoute(variable)
@@ -249,17 +249,17 @@ func (route *Route) insertStaticSubRoute(path string) (*Route, error) {
 		return route, nil
 	}
 	if route.isEndVariable() {
-		return nil, &errors.ErrOverlapStaticVar{route.path, path}
+		return nil, &muxerrors.ErrOverlapStaticVar{route.path, path}
 	}
 	if route.hasPartVariableChild() {
-		return nil, &errors.ErrOverlapStaticVar{path, route.variableChildPath()}
+		return nil, &muxerrors.ErrOverlapStaticVar{path, route.variableChildPath()}
 	}
 	parent, found, remainingPath := route.findStaticSubRoute(path)
 	if len(remainingPath) == 0 {
 		return found, nil
 	}
 	if parent.hasPartVariableChild() {
-		return nil, &errors.ErrOverlapStaticVar{remainingPath, parent.variableChildPath()}
+		return nil, &muxerrors.ErrOverlapStaticVar{remainingPath, parent.variableChildPath()}
 	}
 	if found == nil {
 		return parent.insertStaticChildPath(remainingPath), nil

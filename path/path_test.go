@@ -178,13 +178,13 @@ func TestFindAllVarSubmatchIndex(t *testing.T) {
 		{"some{e{l}se}thing", [][]int{[]int{6, 9}}},
 		{"so{a}me{b}th{C}ing{D}", [][]int{[]int{2, 5}, []int{7, 10}, []int{12, 15}, []int{18, 21}}},
 		{"some{*thing}", [][]int{[]int{4, 12}}},
+		{"some{}thing", [][]int{[]int{4, 6}}},
+		{"{}something", [][]int{[]int{0, 2}}},
+		{"something{}", [][]int{[]int{9, 11}}},
+		{"so{}me{}th{}ing", [][]int{[]int{2, 4}, []int{6, 8}, []int{10, 12}}},
 		//will not find variables.
-		{"some{}thing", [][]int{}},
 		{"some{var:}thing", [][]int{}},
 		{"some{1234}thing", [][]int{}},
-		{"{}something", [][]int{}},
-		{"something{}", [][]int{}},
-		{"so{}me{}th{}ing", [][]int{}},
 	}
 	for _, test := range tests {
 		result := FindAllVarSubmatchIndex(test.path)

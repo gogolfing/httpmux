@@ -6,6 +6,13 @@ import (
 	"strings"
 )
 
+const (
+	RootPath     = "/"
+	RootPathRune = '/'
+)
+
+const Any = "{*}"
+
 type PathType uint8
 
 const (
@@ -17,7 +24,7 @@ const (
 var varRegexp *regexp.Regexp
 
 func init() {
-	varRegexp = regexp.MustCompile(`\{\*?[A-Za-z_]+\}`)
+	varRegexp = regexp.MustCompile(`\{\*?[A-Za-z_]*\}`)
 }
 
 func TypeOf(path string) PathType {
@@ -47,7 +54,7 @@ func ParseVariable(variable, path string) (string, string, string) {
 	if isEnd {
 		return variable[2 : len(variable)-1], path, ""
 	}
-	index := strings.Index(path, "/")
+	index := strings.Index(path, RootPath)
 	if index < 0 {
 		index = len(path)
 	}
@@ -97,18 +104,18 @@ func FindAllVarSubmatchIndex(path string) [][]int {
 func Clean(path string) string {
 	path = EnsureRootSlash(path)
 	newPath := pathlib.Clean(path)
-	if path[len(path)-1] == '/' && newPath != "/" {
-		newPath += "/"
+	if path[len(path)-1] == RootPathRune && newPath != RootPath {
+		newPath += RootPath
 	}
 	return newPath
 }
 
 func EnsureRootSlash(path string) string {
 	if len(path) == 0 {
-		return "/"
+		return RootPath
 	}
-	if path[0] != '/' {
-		return "/" + path
+	if path[0] != RootPathRune {
+		return RootPath + path
 	}
 	return path
 }
