@@ -36,36 +36,44 @@ func newRoute(path string, children ...*Route) *Route {
 	}
 }
 
+func (route *Route) DeleteFunc(handlerFunc http.HandlerFunc) *Route {
+	return route.Delete(handlerFunc)
+}
+
 func (route *Route) Delete(handler http.Handler) *Route {
 	return route.Handle(handler, "DELETE")
 }
 
-func (route *Route) DeleteFunc(handlerFunc http.HandlerFunc) *Route {
-	return route.HandleFunc(handlerFunc, "DELETE")
+func (route *Route) GetFunc(handlerFunc http.HandlerFunc) *Route {
+	return route.Get(handlerFunc)
 }
 
 func (route *Route) Get(handler http.Handler) *Route {
 	return route.Handle(handler, "GET")
 }
 
-func (route *Route) GetFunc(handlerFunc http.HandlerFunc) *Route {
-	return route.HandleFunc(handlerFunc, "GET")
+func (route *Route) PatchFunc(handlerFunc http.HandlerFunc) *Route {
+	return route.Patch(handlerFunc)
+}
+
+func (route *Route) Patch(handler http.Handler) *Route {
+	return route.Handle(handler, "PATCH")
+}
+
+func (route *Route) PostFunc(handlerFunc http.HandlerFunc) *Route {
+	return route.Post(handlerFunc)
 }
 
 func (route *Route) Post(handler http.Handler) *Route {
 	return route.Handle(handler, "POST")
 }
 
-func (route *Route) PostFunc(handlerFunc http.HandlerFunc) *Route {
-	return route.HandleFunc(handlerFunc, "POST")
+func (route *Route) PutFunc(handlerFunc http.HandlerFunc) *Route {
+	return route.Put(handlerFunc)
 }
 
 func (route *Route) Put(handler http.Handler) *Route {
 	return route.Handle(handler, "PUT")
-}
-
-func (route *Route) PutFunc(handlerFunc http.HandlerFunc) *Route {
-	return route.HandleFunc(handlerFunc, "PUT")
 }
 
 func (route *Route) SubRoute(path string) *Route {

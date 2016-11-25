@@ -39,7 +39,7 @@ func NewHandlers(notFound, methodNotAllowed http.Handler) *Mux {
 }
 
 func (m *Mux) Root() *Route {
-	return m.SubRoute("/")
+	return m.SubRoute(muxpath.RootPath)
 }
 
 func (m *Mux) HandleFunc(path string, handlerFunc http.HandlerFunc, methods ...string) *Route {
