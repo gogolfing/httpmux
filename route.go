@@ -8,13 +8,11 @@ import (
 )
 
 type Variable struct {
-	Name  string
+	Name  VarName
 	Value string
 }
 
-func (v *Variable) String() string {
-	return fmt.Sprintf("&%v", *v)
-}
+type VarName string
 
 type Route struct {
 	path     string
@@ -179,7 +177,7 @@ func (route *Route) searchPartVariableOrStaticChild(path string) (*Route, []*Var
 
 func (route *Route) searchParseVariableChild(path string) (*Route, []*Variable, string) {
 	name, value, remainingPath := muxpath.ParseVariable(route.variableChildPath(), path)
-	return route.varChild, []*Variable{&Variable{name, value}}, remainingPath
+	return route.varChild, []*Variable{&Variable{VarName(name), value}}, remainingPath
 }
 
 func (route *Route) searchStaticChild(path string) (*Route, []*Variable, string) {
@@ -191,11 +189,13 @@ func (route *Route) searchStaticChild(path string) (*Route, []*Variable, string)
 }
 
 func (route *Route) isServable(remainingPath string, exact bool) bool {
-	if exact {
-		return len(remainingPath) == 0 && route.isRegistered()
+	if !route.isRegistered() {
+		return false
 	}
-	panic("non exact isServable() is not implemented")
-	return false
+	if exact {
+		return remainingPath == ""
+	}
+	return remainingPath == muxpath.RootPath
 }
 
 func (route *Route) getHandler(r *http.Request) (http.Handler, error) {

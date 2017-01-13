@@ -60,7 +60,7 @@ func TestRoute_methodHandlers(t *testing.T) {
 	root.Get(one)
 	root.Post(two)
 	root.Put(three)
-	root.Handle(four, "PATCH")
+	root.Patch(four)
 
 	tests := []struct {
 		method  string
@@ -85,15 +85,15 @@ func TestRoute_methodHandlerFuncs(t *testing.T) {
 	root := newRoute("")
 	root.DeleteFunc(intHandler(0).ServeHTTP)
 	root.GetFunc(intHandler(1).ServeHTTP)
+	root.PatchFunc(intHandler(4).ServeHTTP)
 	root.PostFunc(intHandler(2).ServeHTTP)
 	root.PutFunc(intHandler(3).ServeHTTP)
-	root.HandleFunc(intHandler(4).ServeHTTP, "PATCH")
 
 	testRouteResponse(t, root, "DELETE", 200, "0")
 	testRouteResponse(t, root, "GET", 200, "1")
+	testRouteResponse(t, root, "PATCH", 200, "4")
 	testRouteResponse(t, root, "POST", 200, "2")
 	testRouteResponse(t, root, "PUT", 200, "3")
-	testRouteResponse(t, root, "PATCH", 200, "4")
 }
 
 func TestRoute_HandleFunc(t *testing.T) {

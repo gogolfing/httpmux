@@ -188,22 +188,24 @@ var staticRoutes = []testRoute{
 	{"GET", "/progs/update.bash"},
 }
 
-func BenchmarkStaticRoutes(b *testing.B) {
-	m := New()
-	m.handleTestRoutes(staticRoutes, &emptyHandler{})
-	benchmarkRoutes(b, m, staticRoutes)
+var benchMux *Mux
+
+func init() {
+	emptyHandler := &emptyHandler{}
+
+	benchMux = &Mux{}
+	for _, route := range staticRoutes {
+		benchMux.Handle(route.path, emptyHandler, route.method)
+	}
 }
 
-func (m *Mux) handleTestRoutes(routes []testRoute, handler http.Handler) {
-	for _, route := range routes {
-		m.Handle(route.path, handler, route.method)
-	}
+func BenchmarkStaticRoutes(b *testing.B) {
+	benchmarkRoutes(b, benchMux, staticRoutes)
 }
 
 func benchmarkRoutes(b *testing.B, m *Mux, routes []testRoute) {
 	w := &emptyResponseWriter{}
 	r, _ := http.NewRequest("GET", "/", nil)
-	u := r.URL
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -212,7 +214,6 @@ func benchmarkRoutes(b *testing.B, m *Mux, routes []testRoute) {
 		for _, route := range routes {
 			r.Method = route.method
 			r.RequestURI = route.path
-			u.Path = route.path
 			m.ServeHTTP(w, r)
 		}
 	}

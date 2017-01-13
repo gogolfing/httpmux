@@ -1,7 +1,7 @@
 package httpmux
 
 import (
-	errorslib "errors"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -17,27 +17,12 @@ const (
 )
 
 var (
-	ErrUnknown = errorslib.New("unknown error type")
+	ErrUnknown = errors.New("unknown error type")
 )
 
-func TestNew(t *testing.T) {
-	m := New()
-	if m.NotFoundHandler != nil || m.MethodNotAllowedHandler != nil {
-		t.Fail()
-	}
-}
-
-func TestNewHandlers(t *testing.T) {
-	notFound := intHandler(0)
-	methodNotAllowed := intHandler(1)
-	m := NewHandlers(notFound, methodNotAllowed)
-	if m.NotFoundHandler != notFound || m.MethodNotAllowedHandler != methodNotAllowed {
-		t.Fail()
-	}
-}
-
 func TestMux_Handle(t *testing.T) {
-	m := New()
+	//TODO check comments.
+	m := &Mux{}
 	m.Handle("something", intHandler(0))
 	m.Handle("/something/else", intHandler(1))
 	m.Handle("/getonly", intHandler(2), "GET")
@@ -58,7 +43,8 @@ func TestMux_Handle(t *testing.T) {
 }
 
 func TestMux_HandleFunc(t *testing.T) {
-	m := New()
+	//TODO check comments.
+	m := &Mux{}
 	m.HandleFunc("something", intHandler(0).ServeHTTP)
 	m.HandleFunc("/something/else", intHandler(1).ServeHTTP)
 	m.HandleFunc("/getonly", intHandler(2).ServeHTTP, "GET")
@@ -77,7 +63,8 @@ func TestMux_HandleFunc(t *testing.T) {
 }
 
 func TestMux_SubRoute(t *testing.T) {
-	m := New()
+	//TODO check comments.
+	m := &Mux{}
 	m.SubRoute("sub").
 		Delete(intHandler(0)).
 		Get(intHandler(1)).
@@ -103,7 +90,8 @@ func TestMux_SubRoute(t *testing.T) {
 }
 
 func TestMux_SubRoute_variable(t *testing.T) {
-	m := New()
+	//TODO check comments.
+	m := &Mux{}
 	m.SubRoute("/clients/{client_id}").Get(intHandler(1))
 	m.SubRoute("/clients/{client_id}/locations/{location_id}").Get(intHandler(2))
 	m.SubRoute("static/{*filepath}").Get(intHandler(3))
@@ -122,9 +110,11 @@ func TestMux_SubRoute_variable(t *testing.T) {
 }
 
 func TestMux_Handle_root(t *testing.T) {
+	//TODO
 }
 
 func TestMux_Handle_overwrite(t *testing.T) {
+	//TODO
 }
 
 type serveHTTPTest struct {
@@ -151,7 +141,7 @@ func testMux_ServeHTTP(t *testing.T, m *Mux, tests []serveHTTPTest) {
 }
 
 func TestMux_serveError(t *testing.T) {
-	m := New()
+	m := &Mux{}
 	tests := []struct {
 		err      error
 		code     int
@@ -173,7 +163,7 @@ func TestMux_serveError(t *testing.T) {
 }
 
 func TestMux_getErrorHandler_methodNotAllowed(t *testing.T) {
-	m := New()
+	m := &Mux{}
 	err := ErrMethodNotAllowed([]string{"GET"})
 
 	handler := m.getErrorHandler(err)
@@ -181,7 +171,7 @@ func TestMux_getErrorHandler_methodNotAllowed(t *testing.T) {
 		t.Fail()
 	}
 
-	m = New()
+	m = &Mux{}
 	m.MethodNotAllowedHandler = intHandler(0)
 	handler = m.getErrorHandler(err)
 	if handler != m.MethodNotAllowedHandler {
@@ -190,7 +180,7 @@ func TestMux_getErrorHandler_methodNotAllowed(t *testing.T) {
 }
 
 func TestMux_getErrorHandler_notFound(t *testing.T) {
-	m := New()
+	m := &Mux{}
 	err := ErrNotFound
 
 	handler := m.getErrorHandler(err)
@@ -198,7 +188,7 @@ func TestMux_getErrorHandler_notFound(t *testing.T) {
 		t.Fail()
 	}
 
-	m = New()
+	m = &Mux{}
 	m.NotFoundHandler = intHandler(0)
 	handler = m.getErrorHandler(err)
 	if handler != m.NotFoundHandler {
@@ -207,7 +197,7 @@ func TestMux_getErrorHandler_notFound(t *testing.T) {
 }
 
 func TestMux_getErrorHandler_nil(t *testing.T) {
-	m := New()
+	m := &Mux{}
 	err := ErrUnknown
 	handler := m.getErrorHandler(err)
 	if handler != nil {
