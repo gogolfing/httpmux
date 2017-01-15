@@ -121,15 +121,10 @@ func EnsureRootSlash(path string) string {
 }
 
 func CommonPrefix(a, b string) string {
-	result := []byte{}
-	for i := 0; i < len(a) && i < len(b); i++ {
-		if a[i] == b[i] {
-			result = append(result, a[i])
-		} else {
-			break
-		}
+	i := 0
+	for ; i < len(a) && i < len(b) && a[i] == b[i]; i++ {
 	}
-	return string(result)
+	return a[:i]
 }
 
 func CompareIgnorePrefix(a, b string) (int, string) {

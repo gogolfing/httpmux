@@ -40,29 +40,32 @@ func serveErrorStatus(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
 
-type ErrOverlapStaticVar struct {
-	StaticPath string
-	Variable   string
-}
+type ErrOverlapStaticVar VarName
 
-func (e *ErrOverlapStaticVar) Error() string {
-	return fmt.Sprintf("cannot have static path: %q and variable %q at the same location", e.StaticPath, e.Variable)
+func (e ErrOverlapStaticVar) Error() string {
+	return fmt.Sprintf("httpmux: cannot have static path and variable %q at the same location", string(e))
 }
 
 type ErrConsecutiveVars struct {
-	Variable1 string
-	Variable2 string
+	Variable1 VarName
+	Variable2 VarName
 }
 
 func (e *ErrConsecutiveVars) Error() string {
-	return fmt.Sprintf("cannot have two immediately consecutive variables: %q, %q", e.Variable1, e.Variable2)
+	return fmt.Sprintf("httpmux: cannot have two consecutive variables %q and %q", e.Variable1, e.Variable2)
 }
 
 type ErrUnequalVars struct {
-	Variable1 string
-	Variable2 string
+	Variable1 VarName
+	Variable2 VarName
 }
 
 func (e *ErrUnequalVars) Error() string {
-	return fmt.Sprintf("cannot have two unequal variables at the same location: %q, %q", e.Variable1, e.Variable2)
+	return fmt.Sprintf("httpmux: cannot have two unequal variables at the same location %q and %q", e.Variable1, e.Variable2)
+}
+
+type errSomethingAfterEndVar string
+
+func (e errSomethingAfterEndVar) Error() string {
+	return string(e)
 }
