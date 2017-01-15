@@ -1,9 +1,0 @@
-- Remove exact from searchSubRouteHandler(). Check again to make sure it is always
-    called with true.
-    - Check to see if exact is for allowing a trailing slash. I think that is what
-        it is used for.
-    - test four possibilities.
-- Test variable and context.Context storage.
-- Test non exact trailing slash.
-- Add in config option for non exact (trailing slash).
-- Do TODOs in test files.

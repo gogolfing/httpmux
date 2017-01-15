@@ -8,7 +8,7 @@ import (
 )
 
 type Mux struct {
-	trie Route
+	root node
 
 	MethodNotAllowedHandler http.Handler
 	NotFoundHandler         http.Handler
