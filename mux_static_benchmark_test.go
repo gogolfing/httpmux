@@ -193,7 +193,7 @@ var benchMux *Mux
 func init() {
 	emptyHandler := &emptyHandler{}
 
-	benchMux = &Mux{}
+	benchMux = New()
 	for _, route := range staticRoutes {
 		benchMux.Handle(route.path, emptyHandler, route.method)
 	}

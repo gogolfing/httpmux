@@ -8,10 +8,18 @@ import (
 )
 
 type Mux struct {
-	root node
+	root *Route
+
+	AllowTrailingSlashes bool
 
 	MethodNotAllowedHandler http.Handler
 	NotFoundHandler         http.Handler
+}
+
+func New() *Mux {
+	return &Mux{
+		root: newRootRoute(),
+	}
 }
 
 func (m *Mux) HandleFunc(path string, handlerFunc http.HandlerFunc, methods ...string) *Route {
@@ -19,7 +27,7 @@ func (m *Mux) HandleFunc(path string, handlerFunc http.HandlerFunc, methods ...s
 }
 
 func (m *Mux) Handle(path string, handler http.Handler, methods ...string) *Route {
-	return m.SubRoute(muxpath.EnsureRootSlash(path)).Handle(handler, methods...)
+	return m.SubRoute(path).Handle(handler, methods...)
 }
 
 func (m *Mux) Root() *Route {
@@ -27,21 +35,24 @@ func (m *Mux) Root() *Route {
 }
 
 func (m *Mux) SubRoute(path string) *Route {
-	return m.trie.SubRoute(muxpath.EnsureRootSlash(path))
+	return m.root.SubRoute(path)
 }
 
 func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	path := muxpath.Clean(r.URL.Path)
-	handler, vars, err := m.trie.searchSubRouteHandler(r, path, true)
+	handler, vars, err := m.root.findHandler(r.URL.Path, r.Method, m.getFoundMatcher())
 	if err != nil {
 		m.serveError(w, r, err)
 		return
 	}
-	if handler == nil {
-		return
-	}
 	r = m.mapVariables(r, vars)
 	handler.ServeHTTP(w, r)
+}
+
+func (m *Mux) getFoundMatcher() foundMatcher {
+	if m.AllowTrailingSlashes {
+		return stringFoundMatcher(muxpath.RootPath)
+	}
+	return stringFoundMatcher("")
 }
 
 func (m *Mux) serveError(w http.ResponseWriter, r *http.Request, err error) {
