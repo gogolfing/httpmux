@@ -96,14 +96,24 @@ func EnsureRootSlash(path string) string {
 	return path
 }
 
-func CompareAfterPrefix(a, b string) (comp int, prefix string) {
-	prefix = CommonPrefix(a, b)
-	if a[len(prefix):] < b[len(prefix):] {
-		comp = -1
-	} else if a[len(prefix):] > b[len(prefix):] {
-		comp = 1
+func CompareAfterPrefix(a, b string) (comparison, prefixLen int) {
+	if len(a) == 0 || len(b) == 0 {
+		return len(a) - len(b), 0
 	}
-	return
+	i := 0
+	for ; i < len(a) && i < len(b) && a[i] == b[i]; i++ {
+	}
+	if i == len(a) || i == len(b) {
+		return len(a) - len(b), i
+	}
+	return int(a[i] - b[i]), i
+}
+
+func CommonPrefixLen(a, b string) int {
+	i := 0
+	for ; i < len(a) && i < len(b) && a[i] == b[i]; i++ {
+	}
+	return i
 }
 
 func CommonPrefix(a, b string) string {

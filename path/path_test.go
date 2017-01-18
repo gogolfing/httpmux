@@ -188,6 +188,7 @@ func TestEnsureRootSlash(t *testing.T) {
 	}
 }
 
+/*
 func TestCommonPrefix(t *testing.T) {
 	tests := []struct {
 		a      string
@@ -209,6 +210,7 @@ func TestCommonPrefix(t *testing.T) {
 		}
 	}
 }
+*/
 
 func TestCompareIgnorePrefix(t *testing.T) {
 	tests := []struct {

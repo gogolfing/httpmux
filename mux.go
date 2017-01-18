@@ -7,10 +7,14 @@ import (
 	muxpath "github.com/gogolfing/httpmux/path"
 )
 
+const matcher = stringFoundMatcher("/")
+
 type Mux struct {
 	root *Route
 
 	AllowTrailingSlashes bool
+
+	foundMatcher
 
 	MethodNotAllowedHandler http.Handler
 	NotFoundHandler         http.Handler
@@ -18,7 +22,8 @@ type Mux struct {
 
 func New() *Mux {
 	return &Mux{
-		root: newRootRoute(),
+		root:         newRootRoute(),
+		foundMatcher: stringFoundMatcher("/"),
 	}
 }
 

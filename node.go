@@ -38,7 +38,7 @@ func (n *staticNode) appendStatic(static string) (node, error) {
 	if n.segmentVarChild != nil {
 		return nil, ErrOverlapStaticVar(n.segmentVarChild.name)
 	}
-	index, _ := n.indexOfCommonPrefixChild(static)
+	index := n.indexOfCommonPrefixChild(static)
 	if index < 0 { //child not found. needs to be inserted at ^index.
 		newChild := &staticNode{value: static}
 		n.insertStaticChildAtIndex(newChild, ^index)
@@ -138,7 +138,7 @@ func (n *staticNode) find(path string, m foundMatcher) (node, []*Variable, strin
 
 func (n *staticNode) findStaticChildDescendant(path string, m foundMatcher) (node, []*Variable, string) {
 	if len(n.staticChildren) > 0 {
-		index, _ := n.indexOfCommonPrefixChild(path)
+		index := n.indexOfCommonPrefixChild(path)
 		if index < 0 {
 			return n, nil, path
 		}
@@ -147,22 +147,20 @@ func (n *staticNode) findStaticChildDescendant(path string, m foundMatcher) (nod
 	return n, nil, path
 }
 
-func (n *staticNode) indexOfCommonPrefixChild(static string) (int, string) {
+func (n *staticNode) indexOfCommonPrefixChild(static string) int {
 	low, high := 0, len(n.staticChildren)
 	for low < high {
 		mid := (low + high) >> 1
 		comparison, prefix := muxpath.CompareIgnoringPrefix(static, n.staticChildren[mid].value)
 		if len(prefix) > 0 {
-			return mid, prefix
-		} else if comparison == 0 {
-			return mid, static
+			return mid
 		} else if comparison < 0 {
 			high = mid
 		} else { //comparison must be > 0
 			low = mid + 1
 		}
 	}
-	return ^high, ""
+	return ^high
 }
 
 type segmentVarNode struct {
@@ -256,5 +254,5 @@ type foundMatcher interface {
 type stringFoundMatcher string
 
 func (m stringFoundMatcher) matches(n node, remaining string) bool {
-	return n != nil && remaining == string(m)
+	return n != nil && (len(remaining) > 0 || remaining == string(m))
 }
