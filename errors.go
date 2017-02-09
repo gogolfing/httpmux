@@ -63,9 +63,3 @@ type ErrUnequalVars struct {
 func (e *ErrUnequalVars) Error() string {
 	return fmt.Sprintf("httpmux: cannot have two unequal variables at the same location %q and %q", e.Variable1, e.Variable2)
 }
-
-type errSomethingAfterEndVar string
-
-func (e errSomethingAfterEndVar) Error() string {
-	return string(e)
-}

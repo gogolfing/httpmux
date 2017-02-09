@@ -118,6 +118,9 @@ func (n *staticNode) find(path string, m foundMatcher) (node, []*Variable, strin
 	}
 
 	remaining := path[len(n.value):]
+	if len(remaining) == 0 {
+		return n, nil, ""
+	}
 
 	if n.segmentVarChild != nil {
 		return n.segmentVarChild.find(remaining, m)
@@ -137,14 +140,14 @@ func (n *staticNode) find(path string, m foundMatcher) (node, []*Variable, strin
 }
 
 func (n *staticNode) findStaticChildDescendant(path string, m foundMatcher) (node, []*Variable, string) {
-	if len(n.staticChildren) > 0 {
-		index := n.indexOfCommonPrefixChild(path)
-		if index < 0 {
-			return n, nil, path
-		}
-		return n.staticChildren[index].find(path, m)
+	if len(n.staticChildren) == 0 {
+		return n, nil, path
 	}
-	return n, nil, path
+	index := n.indexOfCommonPrefixChild(path)
+	if index < 0 {
+		return n, nil, path
+	}
+	return n.staticChildren[index].find(path, m)
 }
 
 func (n *staticNode) indexOfCommonPrefixChild(static string) int {
@@ -254,5 +257,5 @@ type foundMatcher interface {
 type stringFoundMatcher string
 
 func (m stringFoundMatcher) matches(n node, remaining string) bool {
-	return n != nil && (len(remaining) > 0 || remaining == string(m))
+	return n != nil && (len(remaining) == 0 || remaining == string(m))
 }

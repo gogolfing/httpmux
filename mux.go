@@ -7,14 +7,14 @@ import (
 	muxpath "github.com/gogolfing/httpmux/path"
 )
 
-const matcher = stringFoundMatcher("/")
+type variablesKey int
+
+const variablesKeyValue = variablesKey(1)
 
 type Mux struct {
 	root *Route
 
 	AllowTrailingSlashes bool
-
-	foundMatcher
 
 	MethodNotAllowedHandler http.Handler
 	NotFoundHandler         http.Handler
@@ -22,8 +22,7 @@ type Mux struct {
 
 func New() *Mux {
 	return &Mux{
-		root:         newRootRoute(),
-		foundMatcher: stringFoundMatcher("/"),
+		root: newRootRoute(),
 	}
 }
 
@@ -44,6 +43,7 @@ func (m *Mux) SubRoute(path string) *Route {
 }
 
 func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	//TODO change this method to accept the full http.Request.
 	handler, vars, err := m.root.findHandler(r.URL.Path, r.Method, m.getFoundMatcher())
 	if err != nil {
 		m.serveError(w, r, err)
@@ -89,9 +89,27 @@ func (m *Mux) mapVariables(r *http.Request, vars []*Variable) *http.Request {
 		return r
 	}
 
-	ctx := r.Context()
+	ctx := context.WithValue(r.Context(), variablesKeyValue, vars)
 	for _, v := range vars {
 		ctx = context.WithValue(ctx, v.Name, v.Value)
 	}
 	return r.WithContext(ctx)
+}
+
+func VariablesFrom(c context.Context) []*Variable {
+	vars, _ := c.Value(variablesKeyValue).([]*Variable)
+	return vars
+}
+
+func VariableFrom(c context.Context, name string) *Variable {
+	v, _ := VariableFromOk(c, name)
+	return v
+}
+
+func VariableFromOk(c context.Context, name string) (*Variable, bool) {
+	value, ok := c.Value(VarName(name)).(string)
+	if !ok {
+		return nil, ok
+	}
+	return &Variable{VarName(name), value}, ok
 }
