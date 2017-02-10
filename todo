@@ -1,3 +1,3 @@
 - move benchmarks to httpmux_test package.
-- fill out find and serving section of requirements.
 - switch implementation to CompareAfterCommonPrefix().
+- possibly link variable slices across mux instances.
