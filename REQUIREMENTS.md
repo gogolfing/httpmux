@@ -20,7 +20,8 @@ Following are the acceptance requirements for the performance of this package.
 
 #### Finding and Serving Routes
 - All incoming request paths are cleaned. See ./httpmux/path.Clean().
-- All of the registered path must be matched in the request path.
+- All of the registered path must be exactly matched in the request path. This
+includes case-sensitivity.
     - If there is an ending path separator in the registered path, then the request
     path must also end with a path separator. There will never be multiple ending
     path separators due the aforementioned clean.
@@ -34,10 +35,11 @@ empty values.
 
 - When matching an end variable, the value matches until the end of the request
 path.
-    - If the end variable value would be the empty string, and if the static route
-    before the end variable is servable, then the static route is served. Otherwise,
-    the end variable route is used, which may or may not be servable,
-    which may or may not result in an error handler.
+- End variables must not have an empty value.
+- If there is a static route alongside the end variable route, then the static
+route is searched before serving the end variable route. If the static attempt
+finds a route, then that route is served. Otherwise the end variable route is
+served.
 
 - If a trailing path separator is allowed, then when a route is found,
 and the remaining path to find is empty or exactly `/`, then that route is served. Otherwise,
