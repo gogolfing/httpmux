@@ -52,6 +52,10 @@ func (mh *methodHandler) get(cleanedMethod string) (http.Handler, error) {
 	return nil, ErrMethodNotAllowed(mh.listMethods())
 }
 
+func (mh *methodHandler) isRegistered() bool {
+	return mh.all != nil || len(mh.methods) > 0
+}
+
 func (mh *methodHandler) listMethods() []string {
 	result := make([]string, 0, len(mh.methods))
 	for method, _ := range mh.methods {

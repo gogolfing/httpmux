@@ -96,18 +96,51 @@ func TestMux_ServeHTTP_ServesAllRoutesWithoutTrailingCorrectly(t *testing.T) {
 				{"catchallvalue", "will/catch/)(*$)(@&$_ANYTHING_IN_URL_PATH"},
 			},
 		},
-		// {
-		// 	Method: "POST",
-		// 	Path:   "/catchall/",
-		// 	Status: 200,
-		// 	Body:   "CATCH_ALL",
-		// 	Variables: []*Variable{
-		// 		{"catchallvalue", ""},
-		// 	},
-		// },
+		{
+			Method: "POST",
+			Path:   "/catchall/",
+			Status: 404,
+			Body:   NotFoundBody,
+		},
+		{
+			Method: "GET",
+			Path:   "/catchall/oth",
+			Status: 200,
+			Body:   "CATCH_ALL",
+			Variables: []*Variable{
+				{"catchallvalue", "oth"},
+			},
+		},
+		{
+			Method: "GET",
+			Path:   "/catchall/other",
+			Status: 200,
+			Body:   "CATCH_ALL_OTHER",
+		},
+		{
+			Method: "GET",
+			Path:   "/catchall/other/",
+			Status: 200,
+			Body:   "CATCH_ALL",
+			Variables: []*Variable{
+				{"catchallvalue", "other/"},
+			},
+		},
+		{
+			Method: "GET",
+			Path:   "/catchall/other/again",
+			Status: 200,
+			Body:   "CATCH_ALL_OTHER_AGAIN",
+			Variables: []*Variable{
+				{"catchallagain", "again"},
+			},
+		},
 	}
 
 	testMux_ServeHTTP_result(t, m, tests...)
+}
+
+func TestMux_ServeHTTP_ServesAllRoutesWithAllowTrailingCorrectly(t *testing.T) {
 }
 
 func TestMux_ServeHTTP_ServesUnhandledRootWithANotFound(t *testing.T) {
@@ -123,9 +156,6 @@ func TestMux_ServeHTTP_ServesUnhandledRootWithANotFound(t *testing.T) {
 			Body:   NotFoundBody,
 		},
 	)
-}
-
-func TestMux_ServeHTTP_ServesAllRoutesWithAllowTrailingCorrectly(t *testing.T) {
 }
 
 func testMux_ServeHTTP_result(t *testing.T, m *Mux, tests ...*ServeHTTPTest) {

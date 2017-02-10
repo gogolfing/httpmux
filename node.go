@@ -19,6 +19,7 @@ type node interface {
 
 	put(handler http.Handler, methods ...string)
 	get(cleanedMethod string) (http.Handler, error)
+	isRegistered() bool
 }
 
 type staticNode struct {
@@ -257,5 +258,5 @@ type foundMatcher interface {
 type stringFoundMatcher string
 
 func (m stringFoundMatcher) matches(n node, remaining string) bool {
-	return n != nil && (len(remaining) == 0 || remaining == string(m))
+	return n != nil && n.isRegistered() && (len(remaining) == 0 || remaining == string(m))
 }
