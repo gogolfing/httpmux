@@ -48,6 +48,13 @@ func TestMux_ServeHTTP_ServesAllRoutesWithoutTrailingCorrectly(t *testing.T) {
 	catchall.SubRoute("/other").Handle(TestHandler("CATCH_ALL_OTHER"))
 	catchall.SubRoute("/other/*catchallagain").Handle(TestHandler("CATCH_ALL_OTHER_AGAIN"))
 
+	m.SubRoute("a").Handle(TestHandler("a"))
+	m.SubRoute("a/b").Handle(TestHandler("b"))
+
+	m.SubRoute("/c/").Handle(TestHandler("c/"))
+
+	t.Log(m.SubRoute("/c").node)
+
 	//methods
 	//segment variable with prefix
 	// - followed by slash

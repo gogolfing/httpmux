@@ -58,15 +58,14 @@ func (r *Route) SubRoute(path string) *Route {
 	return newRoute(resultNode)
 }
 
-func (r *Route) findHandler(path, cleanedMethod string, m foundMatcher) (http.Handler, []*Variable, error) {
-	path = muxpath.Clean(path)
-	found, vars, remaining := r.node.find(path, m)
+func (r *Route) findHandler(req *http.Request, m foundMatcher) (http.Handler, []*Variable, error) {
+	found, vars := r.node.find(muxpath.Clean(req.URL.Path), m)
 
-	if !m.matches(found, remaining) {
+	if found == nil {
 		return nil, nil, ErrNotFound
 	}
 
-	handler, err := found.get(cleanedMethod)
+	handler, err := found.get(req.Method)
 	if err != nil {
 		return nil, nil, err
 	}

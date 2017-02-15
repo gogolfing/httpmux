@@ -1,3 +1,5 @@
 - move benchmarks to httpmux_test package.
 - switch implementation to CompareAfterCommonPrefix().
 - possibly link variable slices across mux instances.
+- check the append methods to make sure invalid state error is being returned where correct. I know segment var node needs to change.
+- check code for TODO comments.

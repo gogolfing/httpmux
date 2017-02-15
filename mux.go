@@ -35,7 +35,7 @@ func (m *Mux) Handle(path string, handler http.Handler, methods ...string) *Rout
 }
 
 func (m *Mux) Root() *Route {
-	return m.SubRoute(muxpath.RootPath)
+	return m.SubRoute(muxpath.Slash)
 }
 
 func (m *Mux) SubRoute(path string) *Route {
@@ -43,8 +43,7 @@ func (m *Mux) SubRoute(path string) *Route {
 }
 
 func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	//TODO change this method to accept the full http.Request.
-	handler, vars, err := m.root.findHandler(r.URL.Path, r.Method, m.getFoundMatcher())
+	handler, vars, err := m.root.findHandler(r, m.getFoundMatcher())
 	if err != nil {
 		m.serveError(w, r, err)
 		return
@@ -55,7 +54,7 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (m *Mux) getFoundMatcher() foundMatcher {
 	if m.AllowTrailingSlashes {
-		return stringFoundMatcher(muxpath.RootPath)
+		return stringFoundMatcher(muxpath.Slash)
 	}
 	return stringFoundMatcher("")
 }

@@ -15,7 +15,7 @@ type node interface {
 	appendSegmentVar(name VarName) (node, error)
 	appendEndVar(name VarName) (node, error)
 
-	find(path string, m foundMatcher) (found node, vars []*Variable, remaining string)
+	find(path string, m foundMatcher) (found node, vars []*Variable)
 
 	put(handler http.Handler, methods ...string)
 	get(cleanedMethod string) (http.Handler, error)
@@ -33,6 +33,7 @@ type staticNode struct {
 }
 
 func (n *staticNode) appendStatic(static string) (node, error) {
+	// fmt.Println("staticNode.appendStatic()", n.value, static)
 	if len(static) == 0 {
 		return n, nil
 	}
@@ -49,8 +50,10 @@ func (n *staticNode) appendStatic(static string) (node, error) {
 	return n.staticChildren[index].insertStatic(&n, static)
 }
 
-func (n *staticNode) insertStatic(split **staticNode, static string) (node, error) {
-	prefix := muxpath.CommonPrefix(static, n.value)
+func (n *staticNode) insertStatic(parent **staticNode, static string) (node, error) {
+	fmt.Printf("staticNode.insertStatic() %q %q\n", n.value, static)
+
+	prefix := muxpath.CommonPrefix(n.value, static)
 	if len(prefix) == 0 {
 		return nil, errInvalidState
 	}
@@ -58,14 +61,16 @@ func (n *staticNode) insertStatic(split **staticNode, static string) (node, erro
 		return n.appendStatic(static[len(prefix):])
 	}
 
+	fmt.Printf("now need to split self\n")
+
 	//now need to split self
-	*split = &staticNode{
+	*parent = &staticNode{
 		value:          prefix,
 		staticChildren: []*staticNode{n},
 	}
 	n.value = n.value[len(prefix):]
 
-	return *split, nil
+	return *parent, nil
 }
 
 func (n *staticNode) insertStaticChildAtIndex(child *staticNode, index int) {
@@ -113,41 +118,42 @@ func (n *staticNode) appendEndVar(name VarName) (node, error) {
 	return n.endVarChild, nil
 }
 
-func (n *staticNode) find(path string, m foundMatcher) (node, []*Variable, string) {
+func (n *staticNode) find(path string, m foundMatcher) (node, []*Variable) {
 	if prefix := muxpath.CommonPrefix(path, n.value); len(prefix) != len(n.value) {
-		return n, nil, path
+		return nil, nil
 	}
 
 	remaining := path[len(n.value):]
-	if len(remaining) == 0 {
-		return n, nil, ""
-	}
 
+	//if true then child must be segment variable
 	if n.segmentVarChild != nil {
-		return n.segmentVarChild.find(remaining, m)
+		return n.maybeFindSegmentVarChild(remaining, m)
+	}
+	//now we know either static or end variable child
+
+	found, vars := n.findStaticChildDescendant(remaining, m)
+	if found != nil {
+		return found, vars
 	}
 
-	if n.endVarChild == nil {
-		return n.findStaticChildDescendant(remaining, m)
+	if m.matches(n, remaining) {
+		return n, nil
 	}
 
-	//we know endVarChild is not nil and we need to attempt static before end variable
-	sdcNode, sdcVars, sdcRemaining := n.findStaticChildDescendant(remaining, m)
-
-	if m.matches(sdcNode, sdcRemaining) {
-		return sdcNode, sdcVars, sdcRemaining
+	if n.endVarChild != nil {
+		return n.maybeFindEndVarChild(remaining, m)
 	}
-	return n.endVarChild.find(remaining, m)
+
+	return nil, nil
 }
 
-func (n *staticNode) findStaticChildDescendant(path string, m foundMatcher) (node, []*Variable, string) {
-	if len(n.staticChildren) == 0 {
-		return n, nil, path
-	}
+func (n *staticNode) findStaticChildDescendant(path string, m foundMatcher) (node, []*Variable) {
 	index := n.indexOfCommonPrefixChild(path)
+
 	if index < 0 {
-		return n, nil, path
+		return nil, nil
 	}
+
 	return n.staticChildren[index].find(path, m)
 }
 
@@ -165,6 +171,22 @@ func (n *staticNode) indexOfCommonPrefixChild(static string) int {
 		}
 	}
 	return ^high
+}
+
+//n.segmentVarChild must not be nil.
+func (n *staticNode) maybeFindSegmentVarChild(path string, m foundMatcher) (node, []*Variable) {
+	if len(path) == 0 && strings.HasSuffix(n.value, muxpath.Slash) {
+		return nil, nil
+	}
+	return n.segmentVarChild.find(path, m)
+}
+
+//n.endVarChild must not be nil.
+func (n *staticNode) maybeFindEndVarChild(path string, m foundMatcher) (node, []*Variable) {
+	if len(path) == 0 {
+		return nil, nil
+	}
+	return n.endVarChild.find(path, m)
 }
 
 type segmentVarNode struct {
@@ -200,27 +222,35 @@ func (n *segmentVarNode) appendEndVar(name VarName) (node, error) {
 	}
 }
 
-func (n *segmentVarNode) find(path string, m foundMatcher) (found node, vars []*Variable, remaining string) {
-	index := strings.IndexRune(path, muxpath.RootPathRune)
+func (n *segmentVarNode) find(path string, m foundMatcher) (node, []*Variable) {
+	index := strings.IndexRune(path, muxpath.SlashRune)
 	if index < 0 {
 		index = len(path)
 	}
 
-	found = n
-	vars = []*Variable{
+	vars := []*Variable{
 		&Variable{
 			Name:  VarName(n.name),
 			Value: path[:index],
-		}}
-	remaining = path[index:]
+		},
+	}
+
+	remaining := path[index:]
 
 	if n.staticChild != nil {
 		var childVars []*Variable = nil
-		found, childVars, remaining = n.find(remaining, m)
-		vars = append(vars, childVars...)
+		found, childVars := n.find(remaining, m)
+
+		if found != nil {
+			return found, append(vars, childVars...)
+		}
 	}
 
-	return
+	if m.matches(n, remaining) {
+		return n, vars
+	}
+
+	return nil, nil
 }
 
 type endVarNode struct {
@@ -241,14 +271,13 @@ func (n *endVarNode) appendEndVar(name VarName) (node, error) {
 	return nil, errInvalidState
 }
 
-func (n *endVarNode) find(path string, _ foundMatcher) (found node, vars []*Variable, remaining string) {
-	found = n
-	vars = []*Variable{
+func (n *endVarNode) find(path string, _ foundMatcher) (node, []*Variable) {
+	return n, []*Variable{
 		&Variable{
 			Name:  VarName(n.name),
 			Value: path,
-		}}
-	return
+		},
+	}
 }
 
 type foundMatcher interface {

@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	RootPath     = "/"
-	RootPathRune = '/'
+	Slash     = "/"
+	SlashRune = '/'
 
 	SegmentVarRune = ':'
 	EndVarRune     = '*'
@@ -28,7 +28,7 @@ func SplitIntoStaticAndVariableParts(path string) []string {
 			static, remaining = static+remaining[:varIndex+1], remaining[varIndex+2:]
 
 		case remaining[varIndex] == SegmentVarRune: //found segment variable
-			slashIndex := strings.IndexRune(remaining[varIndex:], RootPathRune)
+			slashIndex := strings.IndexRune(remaining[varIndex:], SlashRune)
 			if slashIndex < 0 {
 				slashIndex = len(remaining)
 			} else {
@@ -80,18 +80,18 @@ func IsEndVariable(value string) bool {
 func Clean(path string) string {
 	path = EnsureRootSlash(path)
 	newPath := pathlib.Clean(path)
-	if path[len(path)-1] == RootPathRune && newPath != RootPath {
-		newPath += RootPath
+	if path[len(path)-1] == SlashRune && newPath != Slash {
+		newPath += Slash
 	}
 	return newPath
 }
 
 func EnsureRootSlash(path string) string {
 	if len(path) == 0 {
-		return RootPath
+		return Slash
 	}
-	if path[0] != RootPathRune {
-		return RootPath + path
+	if path[0] != SlashRune {
+		return Slash + path
 	}
 	return path
 }

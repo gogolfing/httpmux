@@ -26,6 +26,12 @@ includes case-sensitivity.
     path must also end with a path separator. There will never be multiple ending
     path separators due the aforementioned clean.
 
+- If a trailing path separator is allowed, then when a route is found,
+and the remaining path to find is empty or exactly `/`, then that route is served. Otherwise,
+the ErrNotFound handler is used.
+- If a trailing path separator is not allowed, then when a route is found, and
+the remaining path is not the empty string, then the ErrNotFound handler is used.
+
 - When matching a segment variable, the value matches until the next path separator
 or end of the request path.
 - Segment variables starting immediately after a path separator must not have
@@ -40,9 +46,3 @@ path.
 route is searched before serving the end variable route. If the static attempt
 finds a route, then that route is served. Otherwise the end variable route is
 served.
-
-- If a trailing path separator is allowed, then when a route is found,
-and the remaining path to find is empty or exactly `/`, then that route is served. Otherwise,
-the ErrNotFound handler is used.
-- If a trailing path separator is not allowed, then when a route is found, and
-the remaining path is not the empty string, then the ErrNotFound handler is used.
