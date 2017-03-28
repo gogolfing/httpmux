@@ -16,5 +16,5 @@ install:
 script:
   - ./bin/travis/test_coverage
 
-on_success:
+after_success:
   - ./bin/coveralls/push_coverage
