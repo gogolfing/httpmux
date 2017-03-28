@@ -1,10 +1,10 @@
 language: go
 
 go:
-  - tip
+  - 1.7
 
 before_install:
-  - go get github.com/axw/gocov/gocov
+  - ./bin/travis/install
   - go get github.com/mattn/goveralls
   - go get golang.org/x/tools/cmd/cover
 
@@ -20,5 +20,4 @@ notifications:
     recipients:
       - eric.elsken@gmail.com
     on_success: change
-    on_failure: always
-
+    on_failure: change
