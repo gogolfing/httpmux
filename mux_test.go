@@ -53,7 +53,7 @@ func TestMux_ServeHTTP_ServesAllRoutesWithoutTrailingCorrectly(t *testing.T) {
 
 	m.SubRoute("/c/").Handle(TestHandler("c/"))
 
-	t.Log(m.SubRoute("/c").node)
+	// t.Log(m.SubRoute("/c").node)
 
 	//methods
 	//segment variable with prefix
@@ -144,7 +144,7 @@ func TestMux_ServeHTTP_ServesAllRoutesWithoutTrailingCorrectly(t *testing.T) {
 		},
 	}
 
-	testMux_ServeHTTP_result(t, m, tests...)
+	testMux_ServeHTTP(t, m, tests...)
 }
 
 func TestMux_ServeHTTP_ServesAllRoutesWithAllowTrailingCorrectly(t *testing.T) {
@@ -153,7 +153,7 @@ func TestMux_ServeHTTP_ServesAllRoutesWithAllowTrailingCorrectly(t *testing.T) {
 func TestMux_ServeHTTP_ServesUnhandledRootWithANotFound(t *testing.T) {
 	m := New()
 
-	testMux_ServeHTTP_result(
+	testMux_ServeHTTP(
 		t,
 		m,
 		&ServeHTTPTest{
@@ -165,7 +165,7 @@ func TestMux_ServeHTTP_ServesUnhandledRootWithANotFound(t *testing.T) {
 	)
 }
 
-func testMux_ServeHTTP_result(t *testing.T, m *Mux, tests ...*ServeHTTPTest) {
+func testMux_ServeHTTP(t *testing.T, m *Mux, tests ...*ServeHTTPTest) {
 	for i, test := range tests {
 		w := &TestResponseWriter{
 			ResponseRecorder: httptest.NewRecorder(),
@@ -178,31 +178,29 @@ func testMux_ServeHTTP_result(t *testing.T, m *Mux, tests ...*ServeHTTPTest) {
 
 		m.ServeHTTP(w, r)
 
-		t.Log("testMux_ServeHTTP_result", i, r.URL.Path)
-
 		if w.Code != test.Status {
-			t.Errorf("w.Status = %v WANT %v", w.Code, test.Status)
+			t.Errorf("%v: w.Status = %v WANT %v", i, w.Code, test.Status)
 		}
 
 		body := w.Body.String()
 		if body != test.Body {
-			t.Errorf("w.Body = %v WANT %v", body, test.Body)
+			t.Errorf("%v: w.Body = %v WANT %v", i, body, test.Body)
 		}
 
 		if vars := VariablesFrom(w.Context); !reflect.DeepEqual(vars, test.Variables) {
-			t.Errorf("result Variables = %v WANT %v", vars, test.Variables)
+			t.Errorf("%v: result Variables = %v WANT %v", i, vars, test.Variables)
 		}
 
-		for i, v := range test.Variables {
+		for vi, v := range test.Variables {
 			actual, ok := VariableFromOk(w.Context, string(v.Name))
 			if !ok || !reflect.DeepEqual(actual, v) {
-				t.Errorf("result Variable at %v = %v WANT %v", i, actual, v)
+				t.Errorf("%v: result Variable at %v = %v WANT %v", i, vi, actual, v)
 			}
 		}
 
 		for key, values := range test.Header {
 			if actual := w.Header().Get(key); !reflect.DeepEqual(actual, values) {
-				t.Errorf("desired Header %v = %v WANT %v", key, actual, values)
+				t.Errorf("%v: desired Header %v = %v WANT %v", i, key, actual, values)
 			}
 		}
 	}

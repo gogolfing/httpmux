@@ -33,7 +33,6 @@ type staticNode struct {
 }
 
 func (n *staticNode) appendStatic(static string) (node, error) {
-	// fmt.Println("staticNode.appendStatic()", n.value, static)
 	if len(static) == 0 {
 		return n, nil
 	}
@@ -47,30 +46,30 @@ func (n *staticNode) appendStatic(static string) (node, error) {
 		return newChild, nil
 	}
 	//now we know which child to insert on
-	return n.staticChildren[index].insertStatic(&n, static)
+	return newInsertStatic(&n.staticChildren[index], n.staticChildren[index], static)
 }
 
-func (n *staticNode) insertStatic(parent **staticNode, static string) (node, error) {
-	fmt.Printf("staticNode.insertStatic() %q %q\n", n.value, static)
-
-	prefix := muxpath.CommonPrefix(n.value, static)
+func newInsertStatic(parent **staticNode, toSplit *staticNode, static string) (node, error) {
+	prefix := muxpath.CommonPrefix(toSplit.value, static)
 	if len(prefix) == 0 {
 		return nil, errInvalidState
 	}
-	if len(prefix) == len(n.value) {
-		return n.appendStatic(static[len(prefix):])
+	if len(prefix) == len(toSplit.value) {
+		return toSplit.appendStatic(static[len(prefix):])
 	}
 
-	fmt.Printf("now need to split self\n")
-
-	//now need to split self
-	*parent = &staticNode{
+	newNode := &staticNode{
 		value:          prefix,
-		staticChildren: []*staticNode{n},
+		staticChildren: []*staticNode{toSplit},
 	}
-	n.value = n.value[len(prefix):]
+	*parent = newNode
+	toSplit.value = toSplit.value[len(prefix):]
 
-	return *parent, nil
+	remaining := static[len(prefix):]
+	if len(remaining) == 0 {
+		return newNode, nil
+	}
+	return newNode.appendStatic(remaining)
 }
 
 func (n *staticNode) insertStaticChildAtIndex(child *staticNode, index int) {
@@ -205,7 +204,8 @@ func (n *segmentVarNode) appendStatic(static string) (node, error) {
 		return n.staticChild, nil
 	}
 
-	return n.staticChild.insertStatic(&n.staticChild, static)
+	// return n.staticChild.insertStatic(n.staticChild, static)
+	return newInsertStatic(&n.staticChild, n.staticChild, static)
 }
 
 func (n *segmentVarNode) appendSegmentVar(name VarName) (node, error) {
