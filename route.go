@@ -22,6 +22,14 @@ func newRoute(n node) *Route {
 	}
 }
 
+func (r *Route) GetFunc(handlerFunc http.HandlerFunc) *Route {
+	return r.Get(handlerFunc)
+}
+
+func (r *Route) Get(handler http.Handler) *Route {
+	return r.Handle(handler, "GET")
+}
+
 func (r *Route) Handle(handler http.Handler, methods ...string) *Route {
 	r.node.put(handler, methods...)
 	return r

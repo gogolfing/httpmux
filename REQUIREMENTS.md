@@ -41,7 +41,6 @@ empty values.
 
 - When matching an end variable, the value matches until the end of the request
 path.
-- End variables must not have an empty value.
 - If there is a static route alongside the end variable route, then the static
 route is searched before serving the end variable route. If the static attempt
 finds a route, then that route is served. Otherwise the end variable route is

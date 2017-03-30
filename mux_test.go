@@ -106,8 +106,11 @@ func TestMux_ServeHTTP_ServesAllRoutesWithoutTrailingCorrectly(t *testing.T) {
 		{
 			Method: "POST",
 			Path:   "/catchall/",
-			Status: 404,
-			Body:   NotFoundBody,
+			Status: 200,
+			Body:   "CATCH_ALL",
+			Variables: []*Variable{
+				{"catchallvalue", ""},
+			},
 		},
 		{
 			Method: "GET",
@@ -128,9 +131,9 @@ func TestMux_ServeHTTP_ServesAllRoutesWithoutTrailingCorrectly(t *testing.T) {
 			Method: "GET",
 			Path:   "/catchall/other/",
 			Status: 200,
-			Body:   "CATCH_ALL",
+			Body:   "CATCH_ALL_OTHER_AGAIN",
 			Variables: []*Variable{
-				{"catchallvalue", "other/"},
+				{"catchallagain", ""},
 			},
 		},
 		{

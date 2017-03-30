@@ -9,7 +9,7 @@ import (
 
 type variablesKey int
 
-const variablesKeyValue = variablesKey(1)
+const variablesKeyValue variablesKey = 1
 
 type Mux struct {
 	root *Route

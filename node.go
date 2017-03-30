@@ -140,7 +140,7 @@ func (n *staticNode) find(path string, m foundMatcher) (node, []*Variable) {
 	}
 
 	if n.endVarChild != nil {
-		return n.maybeFindEndVarChild(remaining, m)
+		return n.endVarChild.find(remaining, m)
 	}
 
 	return nil, nil
