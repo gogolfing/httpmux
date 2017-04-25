@@ -35,7 +35,7 @@ func (m *Mux) Handle(path string, handler http.Handler, methods ...string) *Rout
 }
 
 func (m *Mux) Root() *Route {
-	return m.SubRoute(muxpath.Slash)
+	return m.root
 }
 
 func (m *Mux) SubRoute(path string) *Route {
