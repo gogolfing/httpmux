@@ -22,12 +22,44 @@ func newRoute(n node) *Route {
 	}
 }
 
+func (r *Route) DeleteFunc(handlerFunc http.HandlerFunc) *Route {
+	return r.Delete(handlerFunc)
+}
+
+func (r *Route) Delete(handler http.Handler) *Route {
+	return r.Handle(handler, http.MethodDelete)
+}
+
 func (r *Route) GetFunc(handlerFunc http.HandlerFunc) *Route {
 	return r.Get(handlerFunc)
 }
 
 func (r *Route) Get(handler http.Handler) *Route {
-	return r.Handle(handler, "GET")
+	return r.Handle(handler, http.MethodGet)
+}
+
+func (r *Route) PatchFunc(handlerFunc http.HandlerFunc) *Route {
+	return r.Patch(handlerFunc)
+}
+
+func (r *Route) Patch(handler http.Handler) *Route {
+	return r.Handle(handler, http.MethodPatch)
+}
+
+func (r *Route) PostFunc(handlerFunc http.HandlerFunc) *Route {
+	return r.Post(handlerFunc)
+}
+
+func (r *Route) Post(handler http.Handler) *Route {
+	return r.Handle(handler, http.MethodPost)
+}
+
+func (r *Route) PutFunc(handlerFunc http.HandlerFunc) *Route {
+	return r.Put(handlerFunc)
+}
+
+func (r *Route) Put(handler http.Handler) *Route {
+	return r.Handle(handler, http.MethodPut)
 }
 
 func (r *Route) Handle(handler http.Handler, methods ...string) *Route {
