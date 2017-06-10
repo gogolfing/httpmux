@@ -25,6 +25,7 @@ type Mux struct {
 func New() *Mux {
 	return &Mux{
 		root: newRootRoute(),
+		MethodNotAllowedHandler: ErrStatusHandler(http.StatusMethodNotAllowed),
 	}
 }
 
