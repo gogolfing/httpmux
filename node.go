@@ -239,7 +239,7 @@ func (n *segmentVarNode) find(path string, m foundMatcher) (node, []*Variable) {
 
 	if n.staticChild != nil {
 		var childVars []*Variable = nil
-		found, childVars := n.find(remaining, m)
+		found, childVars := n.staticChild.find(remaining, m)
 
 		if found != nil {
 			return found, append(vars, childVars...)
