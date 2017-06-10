@@ -16,8 +16,10 @@ type Mux struct {
 
 	AllowTrailingSlashes bool
 
-	MethodNotAllowedHandler http.Handler
-	NotFoundHandler         http.Handler
+	DisallowSettingAllowMethodHeader bool
+	MethodNotAllowedHandler          http.Handler
+
+	NotFoundHandler http.Handler
 }
 
 func New() *Mux {
@@ -68,11 +70,15 @@ func (m *Mux) serveError(w http.ResponseWriter, r *http.Request, err error) {
 }
 
 func (m *Mux) getErrorHandler(err error) http.Handler {
-	if handler, ok := err.(ErrMethodNotAllowed); ok {
+	if errMNA, ok := err.(ErrMethodNotAllowed); ok {
+		var result http.Handler
 		if m.MethodNotAllowedHandler != nil {
-			return m.MethodNotAllowedHandler
+			result = m.MethodNotAllowedHandler
 		}
-		return handler
+		if !m.DisallowSettingAllowMethodHeader {
+			return &setHeaderHandler{name: HeaderAllow, value: errMNA.Header(), wrapped: result}
+		}
+		return result
 	}
 	if err == ErrNotFound {
 		if m.NotFoundHandler != nil {
@@ -81,6 +87,20 @@ func (m *Mux) getErrorHandler(err error) http.Handler {
 		return ErrNotFound
 	}
 	return nil
+}
+
+type setHeaderHandler struct {
+	name    string
+	value   string
+	wrapped http.Handler
+}
+
+func (shh *setHeaderHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add(shh.name, shh.value)
+
+	if shh.wrapped != nil {
+		shh.wrapped.ServeHTTP(w, r)
+	}
 }
 
 func (m *Mux) mapVariables(r *http.Request, vars []*Variable) *http.Request {

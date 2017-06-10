@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	headerAllow = "Allow"
+	HeaderAllow = "Allow"
+
 	ErrNotFound = ErrStatusHandler(http.StatusNotFound)
 )
 
@@ -29,11 +30,6 @@ func (_ ErrMethodNotAllowed) Error() string {
 
 func (e ErrMethodNotAllowed) Header() string {
 	return strings.Join(e, ", ")
-}
-
-func (e ErrMethodNotAllowed) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add(headerAllow, e.Header())
-	serveErrorStatus(w, http.StatusMethodNotAllowed)
 }
 
 func serveErrorStatus(w http.ResponseWriter, status int) {
